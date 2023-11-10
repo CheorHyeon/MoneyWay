@@ -15,7 +15,7 @@ public class SecurityConfig {
 			.securityMatcher("/api/**") // 아래 모든 설정은 /api/** 경로에만 적용
 			.authorizeHttpRequests(
 				authorizeHttpRequests -> authorizeHttpRequests
-					.requestMatchers("/api/*/member/signup").permitAll() // 로그인은 누구나 가능
+					.requestMatchers("/api/*/member/signup").permitAll() // 회원가입은 누구나 가능
 					.requestMatchers("/api/*/member/login").permitAll() // 로그인은 누구나 가능
 					.anyRequest().authenticated() // 나머지는 인증된 사용자만 가능
 			)
