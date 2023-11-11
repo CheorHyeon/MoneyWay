@@ -33,7 +33,7 @@ public class Member {
 	private String userName;
 	@JsonIgnore
 	private String password;
-	private String accessToken;
+	private String refreshToken;
 
 	public List<? extends GrantedAuthority> getGrantedAuthorities() {
 		List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
@@ -45,5 +45,9 @@ public class Member {
 		}
 
 		return grantedAuthorities;
+	}
+
+	public void updateRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
 	}
 }

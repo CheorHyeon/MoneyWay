@@ -1,4 +1,4 @@
-package com.wanted.moneyway.member.controller;
+package com.wanted.moneyway.boundedContext.member.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
