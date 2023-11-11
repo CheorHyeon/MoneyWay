@@ -58,7 +58,7 @@ public class ApiV1MemberController {
 	public static class SignInRequest {
 		@NotBlank(message = "id를 입력해주세요")
 		@Schema(description = "사용자 계정", example = "user123")
-		private String account;
+		private String username;
 		@NotBlank(message = "pw를 입력해주세요")
 		@Schema(description = "사용자 비밀번호 (10자 이상, 숫자만으로 구성 불가, 3회 이상 연속되는 문자 사용 불가)", example = "password129")
 		private String password;
@@ -67,7 +67,7 @@ public class ApiV1MemberController {
 
 	@PostMapping("/login")
 	@Operation(summary = "JWT, RT 발급")
-	public RsData<TokenDTO> signIn(@Valid @RequestBody SignInRequest signInRequest, BindingResult bindingResult) {
+	public RsData<TokenDTO> login(@Valid @RequestBody SignInRequest signInRequest, BindingResult bindingResult) {
 		// 요청 객체에서 입력하지 않은 부분이 있다면 메세지를 담아서 RsData 객체 바로 리턴
 		if (bindingResult.hasErrors()) {
 			List<String> errorMessages = bindingResult.getAllErrors()
@@ -77,7 +77,7 @@ public class ApiV1MemberController {
 			return RsData.of("F-1", errorMessages.get(0));
 		}
 
-		RsData<TokenDTO> rsData = memberService.login(signInRequest.getAccount(), signInRequest.getPassword());
+		RsData<TokenDTO> rsData = memberService.login(signInRequest.getUsername(), signInRequest.getPassword());
 
 		return rsData;
 	}

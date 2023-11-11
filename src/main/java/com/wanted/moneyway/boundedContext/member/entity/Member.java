@@ -3,6 +3,7 @@ package com.wanted.moneyway.boundedContext.member.entity;
 import static jakarta.persistence.GenerationType.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -53,9 +53,9 @@ public class Member {
 	}
 
 	public Map<String, Object> toClaims() {
-			return Map.of(
-				"id", getId(),
-				"userName", getUserName()
-			);
+		Map<String, Object> result = new HashMap<>();
+		result.put("id", getId());
+		result.put("userName", getUserName());
+		return result;
 	}
 }
