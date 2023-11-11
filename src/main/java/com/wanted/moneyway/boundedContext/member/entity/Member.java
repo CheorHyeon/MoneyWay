@@ -4,6 +4,7 @@ import static jakarta.persistence.GenerationType.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,5 +50,12 @@ public class Member {
 
 	public void updateRefreshToken(String refreshToken) {
 		this.refreshToken = refreshToken;
+	}
+
+	public Map<String, Object> toClaims() {
+			return Map.of(
+				"id", getId(),
+				"userName", getUserName()
+			);
 	}
 }
