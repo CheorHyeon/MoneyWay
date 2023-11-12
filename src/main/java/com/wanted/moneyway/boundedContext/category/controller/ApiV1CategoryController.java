@@ -3,8 +3,6 @@ package com.wanted.moneyway.boundedContext.category.controller;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,8 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
-import com.wanted.moneyway.boundedContext.member.entity.Member;
-import com.wanted.moneyway.boundedContext.member.service.MemberService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -32,9 +28,9 @@ public class ApiV1CategoryController {
 
 	private final CategoryService categoryService;
 
+	@PreAuthorize("isAuthenticated()")
 	@GetMapping("")
 	public RsData list() {
-
 		RsData<List<Category>> rsCategories = categoryService.getAll();
 
 		return rsCategories;
