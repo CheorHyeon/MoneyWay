@@ -4,6 +4,8 @@ import static org.springframework.http.HttpStatus.*;
 
 import java.util.stream.Collectors;
 
+import javax.security.sasl.AuthenticationException;
+
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

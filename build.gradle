@@ -30,7 +30,10 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.projectlombok:lombok'
+    // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // WithUserDetails 사용을 위한 시큐리티 테스트 의존성 추가
+    testImplementation('org.springframework.security:spring-security-test')
 
     // security
     implementation 'org.springframework.boot:spring-boot-starter-security'

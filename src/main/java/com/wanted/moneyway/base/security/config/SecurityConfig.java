@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.wanted.moneyway.base.security.filter.AuthenticationExceptionHandlerFilter;
 import com.wanted.moneyway.base.security.filter.JwtAuthorizationFilter;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	private final JwtAuthorizationFilter jwtAuthorizationFilter;
+
+	private final AuthenticationExceptionHandlerFilter authenticationExceptionHandlerFilter;
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
@@ -38,6 +41,10 @@ public class SecurityConfig {
 			.addFilterBefore(
 				jwtAuthorizationFilter, // 엑세스 토큰으로 부터 로그인 처리
 				UsernamePasswordAuthenticationFilter.class
+			)
+			.addFilterBefore(
+				authenticationExceptionHandlerFilter,
+				JwtAuthorizationFilter.class
 			);
 		return http.build();
 	}
