@@ -45,13 +45,4 @@ public class ApiGlobalExceptionHandler {
 
 		return RsData.of("F-RuntimeException", msg, data);
 	}
-
-	@ExceptionHandler(AuthenticationException.class)
-	@ResponseStatus(UNAUTHORIZED) // 예외에 따른 HTTP 상태 코드 설정
-	public RsData<String> handleAuthenticationException(AuthenticationException exception) {
-		String msg = exception.getMessage(); // 예외 메시지 추출
-
-		// RsData.of 메서드 호출
-		return RsData.of("F-AuthenticationException", msg);
-	}
 }

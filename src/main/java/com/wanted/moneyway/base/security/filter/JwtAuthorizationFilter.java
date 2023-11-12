@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import javax.security.sasl.AuthenticationException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -31,7 +32,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain) throws ServletException, IOException {
+		FilterChain filterChain) throws ServletException, IOException, AuthenticationException {
 
 		String requestURI = request.getRequestURI();
 
