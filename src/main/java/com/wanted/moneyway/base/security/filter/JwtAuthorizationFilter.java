@@ -36,14 +36,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
 		String requestURI = request.getRequestURI();
 
-		// 회원가입 및 로그인 요청에 대해서는 필터를 건너뛰기
-		if (Pattern.matches("/api/.*/member/signup", requestURI) || Pattern.matches("/api/.*/member/login", requestURI)) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		// swagger 문서 접속에 대해서도 필터 건너뛰기
-		if (Pattern.matches("/v3/api-docs/.*", requestURI) || Pattern.matches("/swagger-ui/.*", requestURI) || requestURI.startsWith("/swagger-ui.html")) {
+		// swagger 문서 접속, 에러 페이지, 회원가입 및 로그인 요청에 대해서는 필터를 건너뛰기
+		if (Pattern.matches("/swagger-resources/.*", requestURI) ||
+			Pattern.matches("/swagger-ui/.*", requestURI) ||
+			Pattern.matches("/v3/api-docs/?.*", requestURI) ||
+			Pattern.matches("/error", requestURI) ||
+			Pattern.matches("/api/.*/member/signup", requestURI) ||
+			Pattern.matches("/api/.*/member/login", requestURI)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
