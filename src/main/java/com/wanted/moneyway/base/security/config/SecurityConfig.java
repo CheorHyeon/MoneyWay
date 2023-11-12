@@ -7,9 +7,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.wanted.moneyway.base.security.filter.JwtAuthorizationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+	private final JwtAuthorizationFilter jwtAuthorizationFilter;
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
@@ -27,7 +34,11 @@ public class SecurityConfig {
 			.formLogin().disable() // 폼 로그인 방식 끄기
 			.sessionManagement(sessionManagement ->
 				sessionManagement.sessionCreationPolicy(STATELESS)
-			); // 세션끄기
+			) // 세션끄기
+			.addFilterBefore(
+				jwtAuthorizationFilter, // 엑세스 토큰으로 부터 로그인 처리
+				UsernamePasswordAuthenticationFilter.class
+			);
 		return http.build();
 	}
 

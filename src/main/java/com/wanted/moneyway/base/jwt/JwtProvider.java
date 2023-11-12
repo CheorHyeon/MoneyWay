@@ -34,17 +34,6 @@ public class JwtProvider {
 		return cachedSecretKey;
 	}
 
-	public String genAccessToken(Map<String, Object> claims, int seconds) {
-		long now = new Date().getTime();
-		Date accessTokenExpiresIn = new Date(now + 1000L * seconds);
-
-		return Jwts.builder()
-			.claim("body", Ut.json.toStr(claims))
-			.setExpiration(accessTokenExpiresIn)
-			.signWith(getSecretKey(), SignatureAlgorithm.HS512)
-			.compact();
-	}
-
 	public String genToken(Map<String, Object> claims, int seconds) {
 		long now = new Date().getTime();
 		Date accessTokenExpiresIn = new Date(now + 1000L * seconds);
