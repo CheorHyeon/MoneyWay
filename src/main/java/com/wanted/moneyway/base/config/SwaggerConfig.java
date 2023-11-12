@@ -25,10 +25,10 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 	scheme = "bearer"
 )
 @SecurityScheme(
-	name = "refreshToken",
+	name = "RefreshToken",
 	type = SecuritySchemeType.APIKEY,
 	in = SecuritySchemeIn.HEADER,
-	paramName = "X-Refresh-Token"
+	paramName = "RefreshToken"
 )
 public class SwaggerConfig {
 }

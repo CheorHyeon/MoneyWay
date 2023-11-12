@@ -83,4 +83,8 @@ public class MemberService {
 		// 1일 짜리 JWT 발급
 		return jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
 	}
+
+	public Member get(long memberId) {
+		return memberRepository.findById(memberId).get();
+	}
 }
