@@ -1,8 +1,12 @@
 package com.wanted.moneyway.boundedContext.plan.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PlanDTO {
 	private int food = 0;
 	private int cafe = 0;

@@ -13,13 +13,15 @@ import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.repository.CategoryRepository;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.repository.MemberRepository;
+import com.wanted.moneyway.boundedContext.plan.dto.PlanDTO;
+import com.wanted.moneyway.boundedContext.plan.service.PlanService;
 
 @Configuration
 @Profile({"dev", "test"})
 public class NotProd {
 	@Bean
 	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-		CategoryRepository categoryRepository) {
+		CategoryRepository categoryRepository, PlanService planService) {
 		return args -> {
 			String password = passwordEncoder.encode("1234");
 			List<Member> memberList = new ArrayList<>();
@@ -94,6 +96,16 @@ public class NotProd {
 			categoryList.add(category8);
 
 			categoryRepository.saveAll(categoryList);
+
+			int cafe = 100_000, dwelling = 100_000, food = 100_000, communication = 100_000,
+				education = 100_000, shopping = 100_000, transfer = 100_000, others = 100_000;
+			PlanDTO planDTO1 = new PlanDTO(food, cafe, education, dwelling, communication, shopping, transfer, others);
+
+			planService.register(planDTO1, user1.getUserName());
+			planService.register(planDTO1, user2.getUserName());
+			planService.register(planDTO1, user3.getUserName());
+
+
 		};
 	}
 }
