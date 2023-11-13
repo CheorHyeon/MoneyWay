@@ -18,7 +18,8 @@ import com.wanted.moneyway.boundedContext.member.repository.MemberRepository;
 @Profile({"dev", "test"})
 public class NotProd {
 	@Bean
-	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder, CategoryRepository categoryRepository) {
+	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+		CategoryRepository categoryRepository) {
 		return args -> {
 			String password = passwordEncoder.encode("1234");
 			List<Member> memberList = new ArrayList<>();
@@ -43,49 +44,44 @@ public class NotProd {
 			memberRepository.saveAll(memberList);
 
 			List<Category> categoryList = new ArrayList<>();
-
 			Category category1 = Category.builder()
-				.name("식비")
+				.nameH("식비")
+				.nameE("food")
 				.build();
 
 			Category category2 = Category.builder()
-				.name("카페/간식")
+				.nameH("카페/간식")
+				.nameE("cafe")
 				.build();
 
 			Category category3 = Category.builder()
-				.name("생활")
+				.nameH("교육")
+				.nameE("education")
 				.build();
 
 			Category category4 = Category.builder()
-				.name("주거")
+				.nameH("주거")
+				.nameE("dwelling")
 				.build();
 
 			Category category5 = Category.builder()
-				.name("통신")
+				.nameH("통신")
+				.nameE("communication")
 				.build();
 
 			Category category6 = Category.builder()
-				.name("패션쇼핑")
+				.nameH("쇼핑")
+				.nameE("shopping")
 				.build();
 
 			Category category7 = Category.builder()
-				.name("뷰티/미용")
+				.nameH("교통")
+				.nameE("transfer")
 				.build();
 
 			Category category8 = Category.builder()
-				.name("문화/여가")
-				.build();
-
-			Category category9 = Category.builder()
-				.name("여행/숙박")
-				.build();
-
-			Category category10 = Category.builder()
-				.name("교통")
-				.build();
-
-			Category category11 = Category.builder()
-				.name("교육")
+				.nameH("기타")
+				.nameE("others")
 				.build();
 
 			categoryList.add(category1);
@@ -96,9 +92,6 @@ public class NotProd {
 			categoryList.add(category6);
 			categoryList.add(category7);
 			categoryList.add(category8);
-			categoryList.add(category9);
-			categoryList.add(category10);
-			categoryList.add(category11);
 
 			categoryRepository.saveAll(categoryList);
 		};
