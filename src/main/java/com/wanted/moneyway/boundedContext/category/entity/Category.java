@@ -2,6 +2,8 @@ package com.wanted.moneyway.boundedContext.category.entity;
 
 import static jakarta.persistence.GenerationType.*;
 
+import com.querydsl.core.annotations.QueryEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@QueryEntity
 public class Category {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
