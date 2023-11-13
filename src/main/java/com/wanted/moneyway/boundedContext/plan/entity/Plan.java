@@ -31,4 +31,6 @@ public class Plan {
 	private Category category;
 
 	private Integer budget;
+
+	private double categoryRatio;
 }

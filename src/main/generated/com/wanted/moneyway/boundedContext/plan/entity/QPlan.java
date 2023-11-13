@@ -26,6 +26,8 @@ public class QPlan extends EntityPathBase<Plan> {
 
     public final com.wanted.moneyway.boundedContext.category.entity.QCategory category;
 
+    public final NumberPath<Double> categoryRatio = createNumber("categoryRatio", Double.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final com.wanted.moneyway.boundedContext.member.entity.QMember member;
