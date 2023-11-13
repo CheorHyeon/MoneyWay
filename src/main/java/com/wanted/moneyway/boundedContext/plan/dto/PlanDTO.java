@@ -22,4 +22,8 @@ public class PlanDTO {
 		return food == 0 && cafe == 0 && education == 0 && dwelling == 0 &&
 			communication == 0 && shopping == 0 && transfer == 0 && others == 0;
 	}
+
+	public int sumAllFields() {
+		return food + cafe + education + dwelling + communication + shopping + transfer + others;
+	}
 }
