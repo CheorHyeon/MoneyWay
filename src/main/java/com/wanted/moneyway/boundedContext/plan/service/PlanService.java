@@ -76,4 +76,9 @@ public class PlanService {
 
 		return RsData.of("S-1", "지출 계획 생성 완료", personalPlanList);
 	}
+
+	// TODO : 구현 필요
+	public PlanDTO recommend(Integer totalPrice) {
+
+	}
 }
