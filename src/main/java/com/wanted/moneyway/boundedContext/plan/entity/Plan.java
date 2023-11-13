@@ -2,6 +2,8 @@ package com.wanted.moneyway.boundedContext.plan.entity;
 
 import static jakarta.persistence.GenerationType.*;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 
@@ -19,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@DynamicUpdate
 public class Plan {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -33,4 +36,12 @@ public class Plan {
 	private Integer budget;
 
 	private double categoryRatio;
+
+	public void update(int budget) {
+		this.budget = budget;
+	}
+
+	public void updateCategoryRatio(double categoryRatio) {
+		this.categoryRatio = categoryRatio;
+	}
 }

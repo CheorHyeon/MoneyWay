@@ -40,9 +40,15 @@ public class NotProd {
 				.password(password)
 				.build();
 
+			Member user4 = Member.builder()
+				.userName("user4")
+				.password(password)
+				.build();
+
 			memberList.add(user1);
 			memberList.add(user2);
 			memberList.add(user3);
+			memberList.add(user4);
 			memberRepository.saveAll(memberList);
 
 			List<Category> categoryList = new ArrayList<>();
