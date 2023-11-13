@@ -13,12 +13,15 @@ import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.repository.CategoryRepository;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.repository.MemberRepository;
+import com.wanted.moneyway.boundedContext.plan.dto.PlanDTO;
+import com.wanted.moneyway.boundedContext.plan.service.PlanService;
 
 @Configuration
 @Profile({"dev", "test"})
 public class NotProd {
 	@Bean
-	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder, CategoryRepository categoryRepository) {
+	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+		CategoryRepository categoryRepository, PlanService planService) {
 		return args -> {
 			String password = passwordEncoder.encode("1234");
 			List<Member> memberList = new ArrayList<>();
@@ -43,49 +46,44 @@ public class NotProd {
 			memberRepository.saveAll(memberList);
 
 			List<Category> categoryList = new ArrayList<>();
-
 			Category category1 = Category.builder()
-				.name("식비")
+				.nameH("식비")
+				.nameE("food")
 				.build();
 
 			Category category2 = Category.builder()
-				.name("카페/간식")
+				.nameH("카페/간식")
+				.nameE("cafe")
 				.build();
 
 			Category category3 = Category.builder()
-				.name("생활")
+				.nameH("교육")
+				.nameE("education")
 				.build();
 
 			Category category4 = Category.builder()
-				.name("주거")
+				.nameH("주거")
+				.nameE("dwelling")
 				.build();
 
 			Category category5 = Category.builder()
-				.name("통신")
+				.nameH("통신")
+				.nameE("communication")
 				.build();
 
 			Category category6 = Category.builder()
-				.name("패션쇼핑")
+				.nameH("쇼핑")
+				.nameE("shopping")
 				.build();
 
 			Category category7 = Category.builder()
-				.name("뷰티/미용")
+				.nameH("교통")
+				.nameE("transfer")
 				.build();
 
 			Category category8 = Category.builder()
-				.name("문화/여가")
-				.build();
-
-			Category category9 = Category.builder()
-				.name("여행/숙박")
-				.build();
-
-			Category category10 = Category.builder()
-				.name("교통")
-				.build();
-
-			Category category11 = Category.builder()
-				.name("교육")
+				.nameH("기타")
+				.nameE("others")
 				.build();
 
 			categoryList.add(category1);
@@ -96,11 +94,18 @@ public class NotProd {
 			categoryList.add(category6);
 			categoryList.add(category7);
 			categoryList.add(category8);
-			categoryList.add(category9);
-			categoryList.add(category10);
-			categoryList.add(category11);
 
 			categoryRepository.saveAll(categoryList);
+
+			int cafe = 100_000, dwelling = 100_000, food = 100_000, communication = 100_000,
+				education = 100_000, shopping = 100_000, transfer = 100_000, others = 100_000;
+			PlanDTO planDTO1 = new PlanDTO(food, cafe, education, dwelling, communication, shopping, transfer, others);
+
+			planService.register(planDTO1, user1.getUserName());
+			planService.register(planDTO1, user2.getUserName());
+			planService.register(planDTO1, user3.getUserName());
+
+
 		};
 	}
 }

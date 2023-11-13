@@ -29,4 +29,8 @@ public class Plan {
 
 	@ManyToOne
 	private Category category;
+
+	private Integer budget;
+
+	private double categoryRatio;
 }

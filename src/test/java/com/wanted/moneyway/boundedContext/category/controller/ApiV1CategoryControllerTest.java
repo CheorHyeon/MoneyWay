@@ -63,6 +63,6 @@ public class ApiV1CategoryControllerTest {
 			.andExpect(status().is2xxSuccessful())
 			.andExpect(jsonPath("$.resultCode").value("S-1"))
 			.andExpect(jsonPath("$.msg").value("카테고리 목록 조회 성공"))
-			.andExpect(jsonPath("$.data[0].name").value("교육"));
+			.andExpect(jsonPath("$.data[0].nameH").value("식비"));
 	}
 }
