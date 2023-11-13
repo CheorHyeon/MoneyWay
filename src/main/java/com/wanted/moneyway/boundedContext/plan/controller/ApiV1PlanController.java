@@ -35,7 +35,8 @@ public class ApiV1PlanController {
 
 	@PreAuthorize("isAuthenticated()")
 	@PostMapping("")
-	public RsData<List<Plan>> create(PlanDTO planDTO, @AuthenticationPrincipal User user) {
+	public RsData<List<Plan>> create(@RequestBody PlanDTO planDTO, @AuthenticationPrincipal User user) {
+		System.out.println(planDTO.toString());
 		if(planDTO.checkAllZero())
 			return RsData.of("F-1", "예산 항목 하나라도 입력 해야 등록 가능합니다.");
 
