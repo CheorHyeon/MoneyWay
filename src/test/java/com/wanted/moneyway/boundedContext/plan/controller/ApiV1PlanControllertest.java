@@ -125,6 +125,7 @@ public class ApiV1PlanControllertest {
 						{
 						    "food": "200000",
 						    "cafe": "100000",
+						    "education" : "100000",
 						    "dwelling" : "100000",
 						    "communication" : "100000",
 						    "shopping" : "100000",
