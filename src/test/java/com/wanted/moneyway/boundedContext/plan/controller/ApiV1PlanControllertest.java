@@ -105,4 +105,33 @@ public class ApiV1PlanControllertest {
 			.andExpect(jsonPath("$.data[2].category.nameE").value("education"))
 			.andExpect(jsonPath("$.data[2].budget").value(0));
 	}
+
+	@Test
+	@DisplayName("POST /api/v1/plan/recommend 은 예산 추천 URL로 총액을 입력하면 예산별 금액을 추천해준다.")
+	void t3() throws Exception {
+		// "user1"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("user1");
+		String token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				post("/api/v1/plan/recommend")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+					.content("""
+						{
+						    "totalPrice": "1000000"
+						}
+						""".stripIndent())
+					.contentType(new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8))
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("항목별 추천 금액"))
+			.andExpect(jsonPath("$.data.food").value("125000"))
+			.andExpect(jsonPath("$.data.cafe").value("125000"));
+	}
 }
