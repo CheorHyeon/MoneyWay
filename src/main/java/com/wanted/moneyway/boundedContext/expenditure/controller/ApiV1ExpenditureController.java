@@ -1,9 +1,14 @@
 package com.wanted.moneyway.boundedContext.expenditure.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.expenditure.service.ExpenditureService;
 
@@ -61,6 +68,46 @@ public class ApiV1ExpenditureController {
 		RsData rsDelete = expenditureService.delete(deleteRequest.getExpenditureId(), user.getUsername());
 
 		return rsDelete;
+	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("{id}")
+	@Operation(summary = "상세 지출 내역 조회")
+	public RsData expenditures(@AuthenticationPrincipal User user, @PathVariable Long id) {
+		RsData<Expenditure> rsRead = expenditureService.search(user.getUsername(), id);
+		if (rsRead.isFail())
+			return rsRead;
+
+		return RsData.of(rsRead.getResultCode(), rsRead.getMsg(), ExpenditureDTO.of(rsRead.getData()));
+	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("")
+	@Operation(summary = "지출 내역 목록 조회")
+	public RsData<SearchResult> search(
+		@RequestParam(required = false, defaultValue = "#{T(java.time.LocalDate).now().minusDays(7)}") LocalDate startDate,
+		@RequestParam(required = false, defaultValue = "#{T(java.time.LocalDate).now()}") LocalDate endDate,
+		@RequestParam(required = false) Long categoryId,
+		@RequestParam(required = false) Integer minPrice,
+		@RequestParam(required = false) Integer maxPrice,
+		@RequestParam(required = false, defaultValue = "0") Integer pageNumber,
+		@RequestParam(required = false, defaultValue = "10") Integer pageLimit,
+		@AuthenticationPrincipal User user) {
+
+		SearchRequestDTO searchRequestDTO = SearchRequestDTO
+			.builder()
+			.startDate(startDate)
+			.endDate(endDate)
+			.categoryId(categoryId)
+			.minPrice(minPrice)
+			.maxPrice(maxPrice)
+			.pageLimit(pageLimit)
+			.pageNumber(pageNumber)
+			.build();
+
+		System.out.println(searchRequestDTO);
+		RsData<SearchResult> rsSearch = expenditureService.search(user.getUsername(), searchRequestDTO);
+		return rsSearch;
 	}
 
 }
