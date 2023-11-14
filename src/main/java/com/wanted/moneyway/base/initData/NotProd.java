@@ -153,9 +153,28 @@ public class NotProd {
 			expenditureList.add(expenditure3);
 			expenditureList.add(expenditure4);
 
+			for (int i = 1; i <= 10; i++) {
+				Expenditure expenditureTest1 = Expenditure.builder()
+					.member(user1)
+					.category(category1)
+					.memo("테스트 식비" + i)
+					.spendingPrice(10_000)
+					.spendDate(LocalDate.now())
+					.build();
+
+				Expenditure expenditureTest2 = Expenditure.builder()
+					.member(user1)
+					.category(category2)
+					.memo("테스트 카페/간식" + i)
+					.spendingPrice(10_000)
+					.spendDate(LocalDate.now())
+					.build();
+
+				expenditureList.add(expenditureTest1);
+				expenditureList.add(expenditureTest2);
+			}
+
 			expenditureRepository.saveAll(expenditureList);
-
-
 		};
 	}
 }
