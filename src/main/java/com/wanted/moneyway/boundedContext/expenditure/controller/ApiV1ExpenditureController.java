@@ -4,6 +4,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,6 +63,17 @@ public class ApiV1ExpenditureController {
 		RsData rsDelete = expenditureService.delete(deleteRequest.getExpenditureId(), user.getUsername());
 
 		return rsDelete;
+	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("{id}")
+	@Operation(summary = "상세 지출 내역 조회")
+	public RsData expenditures(@AuthenticationPrincipal User user, @PathVariable Long id) {
+		RsData<Expenditure> rsRead = expenditureService.get(user.getUsername(), id);
+		if (rsRead.isFail())
+			return rsRead;
+
+		return RsData.of(rsRead.getResultCode(), rsRead.getMsg(), ExpenditureDTO.of(rsRead.getData()));
 	}
 
 }

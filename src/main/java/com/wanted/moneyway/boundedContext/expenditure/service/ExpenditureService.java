@@ -65,4 +65,20 @@ public class ExpenditureService {
 
 		return RsData.of("S-1", "삭제 성공");
 	}
+/*
+	userName과 expeditureId를 받아 지출 내역을 반환하는 메서드
+ */
+	public RsData<Expenditure> get(String userName, Long expenditureId) {
+		Member member = memberService.get(userName);
+
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).get();
+
+		if(expenditure == null)
+			return RsData.of("F-1", "존재하지 않는 내역입니다.");
+
+		if(!expenditure.getMember().equals(member))
+			return RsData.of("F-1", "지출 내역 작성자가 아닙니다.");
+
+		return RsData.of("S-1", "내역 조회 성공", expenditure);
+	}
 }
