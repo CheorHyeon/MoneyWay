@@ -1,5 +1,6 @@
 package com.wanted.moneyway.base.initData;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.repository.CategoryRepository;
+import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
+import com.wanted.moneyway.boundedContext.expenditure.repository.ExpenditureRepository;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.repository.MemberRepository;
 import com.wanted.moneyway.boundedContext.plan.dto.PlanDTO;
@@ -21,7 +24,7 @@ import com.wanted.moneyway.boundedContext.plan.service.PlanService;
 public class NotProd {
 	@Bean
 	CommandLineRunner initData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-		CategoryRepository categoryRepository, PlanService planService) {
+		CategoryRepository categoryRepository, PlanService planService, ExpenditureRepository expenditureRepository) {
 		return args -> {
 			String password = passwordEncoder.encode("1234");
 			List<Member> memberList = new ArrayList<>();
@@ -110,6 +113,38 @@ public class NotProd {
 			planService.register(planDTO1, user1.getUserName());
 			planService.register(planDTO1, user2.getUserName());
 			planService.register(planDTO1, user3.getUserName());
+
+			List<Expenditure> expenditureList = new ArrayList<>();
+
+			Expenditure expenditure1 = Expenditure.builder()
+				.member(user1)
+				.category(category1)
+				.memo("식당 내기 짐")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.of(2023, 11, 01))
+				.build();
+
+			Expenditure expenditure2 = Expenditure.builder()
+				.member(user1)
+				.category(category1)
+				.memo("식당 내기 짐")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.of(2023, 11, 02))
+				.build();
+
+			Expenditure expenditure3 = Expenditure.builder()
+				.member(user1)
+				.category(category1)
+				.memo("식당 내기 짐")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.of(2023, 11, 03))
+				.build();
+
+			expenditureList.add(expenditure1);
+			expenditureList.add(expenditure2);
+			expenditureList.add(expenditure3);
+
+			expenditureRepository.saveAll(expenditureList);
 
 
 		};

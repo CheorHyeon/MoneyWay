@@ -25,4 +25,8 @@ public class CategoryService {
 
 		return RsData.of("S-1", "카테고리 목록 조회 성공", allCategories);
 	}
+
+	public Category get(Long categoryId) {
+		return categoryRepository.findById(categoryId).get();
+	}
 }
