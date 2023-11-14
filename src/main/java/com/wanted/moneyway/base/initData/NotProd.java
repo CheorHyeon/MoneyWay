@@ -140,9 +140,18 @@ public class NotProd {
 				.spendDate(LocalDate.of(2023, 11, 03))
 				.build();
 
+			Expenditure expenditure4 = Expenditure.builder()
+				.member(user2)
+				.category(category1)
+				.memo("식당 내기 짐")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.of(2023, 11, 04))
+				.build();
+
 			expenditureList.add(expenditure1);
 			expenditureList.add(expenditure2);
 			expenditureList.add(expenditure3);
+			expenditureList.add(expenditure4);
 
 			expenditureRepository.saveAll(expenditureList);
 
