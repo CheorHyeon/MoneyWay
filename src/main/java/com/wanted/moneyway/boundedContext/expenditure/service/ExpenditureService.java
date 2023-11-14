@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
+import com.wanted.moneyway.boundedContext.expenditure.controller.ApiV1ExpenditureController;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.expenditure.repository.ExpenditureRepository;
@@ -47,5 +48,21 @@ public class ExpenditureService {
 
 		return RsData.of("S-1", "지출 정보 저장 성공", expenditure);
 
+	}
+
+	@Transactional
+	public RsData delete(Long expenditureId, String username) {
+		Member member = memberService.get(username);
+
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).get();
+
+		if(expenditure == null)
+			return RsData.of("F-1", "이미 삭제된 지출 내역입니다.");
+		if(!expenditure.getMember().equals(member))
+			return RsData.of("F-1", "내역 작성한 사용자만 삭제 가능합니다.");
+
+		expenditureRepository.delete(expenditure);
+
+		return RsData.of("S-1", "삭제 성공");
 	}
 }
