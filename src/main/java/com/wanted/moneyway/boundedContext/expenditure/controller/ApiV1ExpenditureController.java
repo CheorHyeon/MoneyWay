@@ -33,7 +33,7 @@ public class ApiV1ExpenditureController {
 	private final ExpenditureService expenditureService;
 
 	@PreAuthorize("isAuthenticated()")
-	@PostMapping("/create")
+	@PostMapping("")
 	@Operation(summary = "지출 내역 저장")
 	public RsData create(@RequestBody ExpenditureDTO expenditureDTO, @AuthenticationPrincipal User user) {
 		RsData<Expenditure> rsCreate = expenditureService.create(expenditureDTO, user.getUsername());
