@@ -13,6 +13,7 @@ import com.wanted.moneyway.boundedContext.expenditure.repository.ExpenditureRepo
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.service.MemberService;
 
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -54,10 +55,10 @@ public class ExpenditureService {
 	public RsData delete(Long expenditureId, String username) {
 		Member member = memberService.get(username);
 
-		Expenditure expenditure = expenditureRepository.findById(expenditureId).get();
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
 
 		if(expenditure == null)
-			return RsData.of("F-1", "이미 삭제된 지출 내역입니다.");
+			return RsData.of("F-1", "이미 삭제되었거나 존재하지 않는 내역입니다.");
 		if(!expenditure.getMember().equals(member))
 			return RsData.of("F-1", "내역 작성한 사용자만 삭제 가능합니다.");
 
@@ -71,10 +72,10 @@ public class ExpenditureService {
 	public RsData<Expenditure> get(String userName, Long expenditureId) {
 		Member member = memberService.get(userName);
 
-		Expenditure expenditure = expenditureRepository.findById(expenditureId).get();
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
 
 		if(expenditure == null)
-			return RsData.of("F-1", "존재하지 않는 내역입니다.");
+			return RsData.of("F-1", "이미 삭제되었거나 존재하지 않는 내역입니다.");
 
 		if(!expenditure.getMember().equals(member))
 			return RsData.of("F-1", "지출 내역 작성자가 아닙니다.");
