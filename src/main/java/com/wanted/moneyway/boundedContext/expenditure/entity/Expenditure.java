@@ -2,8 +2,9 @@ package com.wanted.moneyway.boundedContext.expenditure.entity;
 
 import static jakarta.persistence.GenerationType.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
+import com.querydsl.core.annotations.QueryEntity;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@QueryEntity
 public class Expenditure {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -30,7 +32,7 @@ public class Expenditure {
 
 	private String memo;
 
-	private LocalDateTime spendDate;
+	private LocalDate spendDate;
 
 	private Boolean isTotal;
 

@@ -32,7 +32,7 @@ public class QExpenditure extends EntityPathBase<Expenditure> {
 
     public final StringPath memo = createString("memo");
 
-    public final DateTimePath<java.time.LocalDateTime> spendDate = createDateTime("spendDate", java.time.LocalDateTime.class);
+    public final DatePath<java.time.LocalDate> spendDate = createDate("spendDate", java.time.LocalDate.class);
 
     public final NumberPath<Integer> spendingPrice = createNumber("spendingPrice", Integer.class);
 
