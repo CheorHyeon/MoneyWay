@@ -19,6 +19,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenditureDTO {
+	@Schema(description = "지출내역 id, 응답용 필드", accessMode = Schema.AccessMode.READ_ONLY)
+	private Long expenditureId;
 	@NotNull(message = "카테고리 Id를 입력해주세요")
 	@Schema(description = "카테고리 Id 입력", example = "1")
 	private Long categoryId;
@@ -35,6 +37,7 @@ public class ExpenditureDTO {
 
 	public static ExpenditureDTO of(Expenditure expenditure) {
 		return ExpenditureDTO.builder()
+			.expenditureId(expenditure.getId())
 			.categoryId(expenditure.getCategory().getId())
 			.isTotal(expenditure.getIsTotal())
 			.memo(expenditure.getMemo())
