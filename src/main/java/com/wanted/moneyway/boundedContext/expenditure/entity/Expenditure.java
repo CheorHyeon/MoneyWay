@@ -1,6 +1,7 @@
 package com.wanted.moneyway.boundedContext.expenditure.entity;
 
 import static jakarta.persistence.GenerationType.*;
+import static java.lang.Boolean.*;
 
 import java.time.LocalDate;
 
@@ -34,7 +35,8 @@ public class Expenditure {
 
 	private LocalDate spendDate;
 
-	private Boolean isTotal;
+	@Builder.Default
+	private Boolean isTotal = TRUE;
 
 	@ManyToOne
 	private Member member;
