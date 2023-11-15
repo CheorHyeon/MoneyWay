@@ -313,4 +313,28 @@ public class ExpenditureService {
 
 		return RsData.of("S-1", "금일 지출액 추천 성공", recommendDTO);
 	}
+	@Transactional
+	public RsData modifyExpenditure(String userName, ExpenditureDTO expenditureDTO, Long expenditureId) {
+		Member member = memberService.get(userName);
+
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
+
+		if(expenditure == null)
+			return RsData.of("F-1", "존재하지 않는 지출 내역입니다.");
+
+		if(!expenditure.getMember().equals(member))
+			return RsData.of("F-1", "지출 내역 작성자만 수정 가능합니다.");
+
+		Expenditure modifyExpenditure = expenditure.toBuilder()
+			.category(categoryService.get(expenditureDTO.getCategoryId()))
+			.isTotal(expenditureDTO.getIsTotal())
+			.spendDate(expenditureDTO.getSpendDate())
+			.memo(expenditureDTO.getMemo())
+			.spendingPrice(expenditureDTO.getSpendingPrice())
+			.build();
+
+		expenditureRepository.save(modifyExpenditure);
+
+		return RsData.of("S-1", "지출 내역 변경 성공", modifyExpenditure);
+	}
 }

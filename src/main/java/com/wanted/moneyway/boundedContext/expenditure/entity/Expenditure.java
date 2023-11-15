@@ -7,6 +7,7 @@ import java.time.LocalDate;
 
 import com.querydsl.core.annotations.QueryEntity;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
+import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 
 import jakarta.persistence.Entity;

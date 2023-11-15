@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -124,5 +125,13 @@ public class ApiV1ExpenditureController {
 	public RsData recommendBudget(@AuthenticationPrincipal User user) {
 		RsData rsRecommend = expenditureService.recommendBudget(user.getUsername());
 		return rsRecommend;
+	}
+
+	@PreAuthorize("isAuthenticated()")
+	@PatchMapping ("/{id}")
+	@Operation(summary = "지출 내역 수정 API")
+	public RsData modify(@AuthenticationPrincipal User user, @RequestBody ExpenditureDTO expenditureDTO, @PathVariable Long id) {
+		RsData rsModify = expenditureService.modifyExpenditure(user.getUsername(), expenditureDTO, id);
+		return rsModify;
 	}
 }
