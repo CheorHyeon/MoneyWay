@@ -14,6 +14,7 @@ import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.RecommendDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RemainingDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
@@ -194,5 +195,122 @@ public class ExpenditureService {
 
 		return RsData.of("S-1", "이번달 남은 지출액 조회 성공", result);
 
+	}
+	/*
+		금일 사용가능한 예산을 추천해주는 메서드
+		반환 형태
+			1. 지출 목표량 남은 금액 : 목표 - 현재까지 사용한 총 금액
+			2. 오늘 사용할 총액 : 지출 목표량 남은 금액 / 말일까지 남은 일
+			3. 각 카테고리별 추천액 : 각 카테고리별 남은 금액 총액 / 말일까지 남은일
+			4. 응원 메세지
+			   - Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
+			   - Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
+	 */
+	public RsData recommendBudget(String userName) {
+		Member member = memberService.get(userName);
+
+		// 예산 계획 추출
+		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
+		if(rsAllByMember.isFail())
+			return rsAllByMember;
+
+		List<Plan> data = rsAllByMember.getData();
+		// 지출 목표 총 사용 금액 추출
+		Integer totalPrice = data.stream()
+			.mapToInt(a -> a.getBudget())
+			.sum();
+
+		LocalDate today = LocalDate.now();
+
+		// 이번달 1일 추출
+		LocalDate startOfMonth = Ut.date.getStartOfMonth(today);
+
+		// 이번달 말일 추출
+		LocalDate endOfMonth = Ut.date.getEndOfMonth(today);
+
+		// 지출액 구할때 동적 쿼리 생성되지 않고 날짜만 적용되도록 설정용 DTO 객체 생성
+		SearchRequestDTO searchRequestDTO = new SearchRequestDTO();
+		searchRequestDTO.setStartDate(startOfMonth);
+		searchRequestDTO.setEndDate(today);
+
+		// 지출에서 이번달 지출액 구하기
+		// 오늘 날짜까지 지출액 총합 / 카테고리별 금액이 나옴
+		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			searchRequestDTO);
+
+		// 카테고리별 합계 금액
+		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
+		List<CategorySum> diffCategorySumList = new ArrayList<>();
+
+		// 실제 지출액 총 금액
+		Integer expenditureTotal = totalAndCategorySum.getTotalSpending();
+
+		// 1. 지출 목표량 남은 금액 : 목표 - 현재까지 사용한 총 금액
+		Integer diffTotal = totalPrice - expenditureTotal;
+
+		// 말일까지 남은 일수 계산
+		int diffDays = Ut.date.getDaysBetweenDates(today, endOfMonth);
+		// 2. 오늘 사용할 총액 : 지출 목표량 남은 금액 / 말일까지 남은 일
+		Integer todayTotal = diffTotal / diffDays;
+
+		// 3. 각 카테고리별 추천액 : 각 카테고리별 남은 금액 총액 / 말일까지 남은일
+		for(Plan p : data) {
+			Optional<CategorySum> optionalCategorySum = categorySumList.stream()
+				.filter(categorySum -> p.getCategory().getId().equals(categorySum.getCategoryId()))
+				.findFirst();
+
+			CategorySum diffCategorySum;
+			// 지출 내역에 해당 카테고리가 있는 경우
+			if(optionalCategorySum.isPresent()) {
+				CategorySum categorySum = optionalCategorySum.get();
+				diffCategorySum = CategorySum
+					.builder()
+					.categoryId(p.getCategory().getId())
+					.categoryName(p.getCategory().getNameH())
+					.spending((p.getBudget() - categorySum.getSpending()) / diffDays)
+					.build();
+			}
+			// 지출 내역에 해당 카테고리가 없는 경우
+			else {
+				diffCategorySum = CategorySum
+					.builder()
+					.categoryId(p.getCategory().getId())
+					.categoryName(p.getCategory().getNameH())
+					.spending(p.getBudget() / diffDays)
+					.build();
+			}
+
+			diffCategorySumList.add(diffCategorySum);
+		}
+
+		// 4. 응원 메세지
+		String message = null;
+		// Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
+
+		if(diffTotal <=0) {
+			message = "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!";
+		}
+		else {
+			// Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
+			for (CategorySum c : diffCategorySumList) {
+				if (c.getSpending() <= 0) {
+					message = "일부 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!";
+					break;
+				}
+			}
+		}
+
+		if(message == null) {
+			message = "절약하는 하루 보내세요!";
+		}
+
+		RecommendDTO recommendDTO = RecommendDTO.builder()
+			.recommendPriceEachCategory(diffCategorySumList)
+			.message(message)
+			.todayTotalPrice(todayTotal)
+			.totalRemainingPrice(diffTotal)
+			.build();
+
+		return RsData.of("S-1", "금일 지출액 추천 성공", recommendDTO);
 	}
 }
