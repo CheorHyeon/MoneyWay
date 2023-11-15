@@ -47,7 +47,7 @@ public class ExpenditureService {
 
 		Category category = categoryService.get(expenditureDTO.getCategoryId());
 
-		if(category == null) {
+		if (category == null) {
 			return RsData.of("F-1", "해당 카테고리는 존재하지 않습니다.");
 		}
 
@@ -72,27 +72,28 @@ public class ExpenditureService {
 
 		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
 
-		if(expenditure == null)
+		if (expenditure == null)
 			return RsData.of("F-1", "이미 삭제되었거나 존재하지 않는 내역입니다.");
-		if(!expenditure.getMember().equals(member))
+		if (!expenditure.getMember().equals(member))
 			return RsData.of("F-1", "내역 작성한 사용자만 삭제 가능합니다.");
 
 		expenditureRepository.delete(expenditure);
 
 		return RsData.of("S-1", "삭제 성공");
 	}
-/*
-	userName과 expeditureId를 받아 지출 내역을 반환하는 메서드
- */
+
+	/*
+		userName과 expeditureId를 받아 지출 내역을 반환하는 메서드
+	 */
 	public RsData<Expenditure> search(String userName, Long expenditureId) {
 		Member member = memberService.get(userName);
 
 		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
 
-		if(expenditure == null)
+		if (expenditure == null)
 			return RsData.of("F-1", "이미 삭제되었거나 존재하지 않는 내역입니다.");
 
-		if(!expenditure.getMember().equals(member))
+		if (!expenditure.getMember().equals(member))
 			return RsData.of("F-1", "지출 내역 작성자가 아닙니다.");
 
 		return RsData.of("S-1", "내역 조회 성공", expenditure);
@@ -123,7 +124,7 @@ public class ExpenditureService {
 
 		// 1. 예산 계획 추출
 		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
-		if(rsAllByMember.isFail())
+		if (rsAllByMember.isFail())
 			return rsAllByMember;
 
 		List<Plan> data = rsAllByMember.getData();
@@ -159,14 +160,14 @@ public class ExpenditureService {
 		Integer diffTotal = totalPrice - expenditureTotal;
 
 		// 3-2. 카테고리별 사용하고 남은 금액 구하기
-		for(Plan p : data) {
+		for (Plan p : data) {
 			Optional<CategorySum> optionalCategorySum = categorySumList.stream()
 				.filter(categorySum -> p.getCategory().getId().equals(categorySum.getCategoryId()))
 				.findFirst();
 
 			CategorySum diffCategorySum;
 			// 지출 내역에 해당 카테고리가 있는 경우
-			if(optionalCategorySum.isPresent()) {
+			if (optionalCategorySum.isPresent()) {
 				CategorySum categorySum = optionalCategorySum.get();
 				diffCategorySum = CategorySum
 					.builder()
@@ -196,6 +197,7 @@ public class ExpenditureService {
 		return RsData.of("S-1", "이번달 남은 지출액 조회 성공", result);
 
 	}
+
 	/*
 		금일 사용가능한 예산을 추천해주는 메서드
 		반환 형태
@@ -211,7 +213,7 @@ public class ExpenditureService {
 
 		// 예산 계획 추출
 		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
-		if(rsAllByMember.isFail())
+		if (rsAllByMember.isFail())
 			return rsAllByMember;
 
 		List<Plan> data = rsAllByMember.getData();
@@ -254,14 +256,14 @@ public class ExpenditureService {
 		Integer todayTotal = diffTotal / diffDays;
 
 		// 3. 각 카테고리별 추천액 : 각 카테고리별 남은 금액 총액 / 말일까지 남은일
-		for(Plan p : data) {
+		for (Plan p : data) {
 			Optional<CategorySum> optionalCategorySum = categorySumList.stream()
 				.filter(categorySum -> p.getCategory().getId().equals(categorySum.getCategoryId()))
 				.findFirst();
 
 			CategorySum diffCategorySum;
 			// 지출 내역에 해당 카테고리가 있는 경우
-			if(optionalCategorySum.isPresent()) {
+			if (optionalCategorySum.isPresent()) {
 				CategorySum categorySum = optionalCategorySum.get();
 				diffCategorySum = CategorySum
 					.builder()
@@ -287,10 +289,9 @@ public class ExpenditureService {
 		String message = null;
 		// Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
 
-		if(diffTotal <=0) {
+		if (diffTotal <= 0) {
 			message = "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!";
-		}
-		else {
+		} else {
 			// Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
 			for (CategorySum c : diffCategorySumList) {
 				if (c.getSpending() <= 0) {
@@ -300,7 +301,7 @@ public class ExpenditureService {
 			}
 		}
 
-		if(message == null) {
+		if (message == null) {
 			message = "절약하는 하루 보내세요!";
 		}
 
@@ -312,5 +313,31 @@ public class ExpenditureService {
 			.build();
 
 		return RsData.of("S-1", "금일 지출액 추천 성공", recommendDTO);
+	}
+
+	@Transactional
+	public RsData modifyExpenditure(String userName, ExpenditureDTO expenditureDTO, Long expenditureId) {
+		Member member = memberService.get(userName);
+
+		Expenditure expenditure = expenditureRepository.findById(expenditureId).orElse(null);
+
+		if (expenditure == null)
+			return RsData.of("F-1", "존재하지 않는 지출 내역입니다.");
+
+		if (!expenditure.getMember().equals(member))
+			return RsData.of("F-1", "지출 내역 작성자만 수정 가능합니다.");
+
+		Expenditure modifyExpenditure = expenditure.toBuilder()
+			.category(expenditureDTO.getCategoryId() == null ? expenditure.getCategory() :
+				categoryService.get(expenditureDTO.getCategoryId()))
+			.isTotal(expenditureDTO.getIsTotal() == null? expenditure.getIsTotal() : expenditureDTO.getIsTotal())
+			.spendDate(expenditureDTO.getSpendDate() == null? expenditure.getSpendDate() : expenditureDTO.getSpendDate())
+			.memo(expenditureDTO.getMemo() == null? expenditure.getMemo() : expenditureDTO.getMemo())
+			.spendingPrice(expenditureDTO.getSpendingPrice() == null? expenditure.getSpendingPrice() : expenditureDTO.getSpendingPrice())
+			.build();
+
+		expenditureRepository.save(modifyExpenditure);
+
+		return RsData.of("S-1", "지출 내역 변경 성공", modifyExpenditure);
 	}
 }
