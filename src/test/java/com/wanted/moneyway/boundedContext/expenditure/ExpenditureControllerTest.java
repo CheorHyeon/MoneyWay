@@ -258,4 +258,31 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.data.remainingPriceByCategoy[0].categoryName").value("식비"))
 			.andExpect(jsonPath("$.data.remainingPriceByCategoy[0].spending").value(390000));
 	}
+
+	/*
+		남은 금액 / 말일까지 남은 일수로 계산하여 결과를 잘 반환하는지 테스트합니다.
+		실제로는 1일별 사용 추천액을 테스트에 넣어야 하지만, 테스트를 수행하는 시점에 따라서 추천 금액이 달라지기에
+		총 금액과 메세지만 테스트합니다.
+	 */
+	@Test
+	@DisplayName("GET /api/v1/expenditure/recommend 는 오늘 사용할 예산을 추천해준다.")
+	void t9() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/recommend")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("금일 지출액 추천 성공"))
+			.andExpect(jsonPath("$.data.totalRemainingPrice").value(870000));
+	}
 }
