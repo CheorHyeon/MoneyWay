@@ -5,6 +5,8 @@ import static java.lang.Boolean.*;
 
 import java.time.LocalDate;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import com.querydsl.core.annotations.QueryEntity;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
@@ -25,6 +27,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @QueryEntity
+@DynamicUpdate  // 변경된 속성만 update 쿼리 발생
 public class Expenditure {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

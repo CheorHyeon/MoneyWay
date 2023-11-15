@@ -131,6 +131,8 @@ public class ApiV1ExpenditureController {
 	@PatchMapping ("/{id}")
 	@Operation(summary = "지출 내역 수정 API")
 	public RsData modify(@AuthenticationPrincipal User user, @RequestBody ExpenditureDTO expenditureDTO, @PathVariable Long id) {
+		if(expenditureDTO.checkAllNull())
+			return RsData.of("F-1", "수정할 값이 하나라도 입력되어야 합니다.");
 		RsData rsModify = expenditureService.modifyExpenditure(user.getUsername(), expenditureDTO, id);
 		return rsModify;
 	}

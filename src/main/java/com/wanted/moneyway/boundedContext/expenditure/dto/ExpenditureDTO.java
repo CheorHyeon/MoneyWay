@@ -33,7 +33,7 @@ public class ExpenditureDTO {
 	@Schema(description = "지출 일자 형식")
 	private LocalDate spendDate;
 	@Schema(description = "지출 합계에 포함 시킬지 여부(기본값 true)", example = "true(기본값) / false")
-	private Boolean isTotal = TRUE;
+	private Boolean isTotal;
 
 	public static ExpenditureDTO of(Expenditure expenditure) {
 		return ExpenditureDTO.builder()
@@ -44,5 +44,9 @@ public class ExpenditureDTO {
 			.spendDate(expenditure.getSpendDate())
 			.spendingPrice(expenditure.getSpendingPrice())
 			.build();
+	}
+
+	public boolean checkAllNull() {
+		return categoryId == null && spendingPrice == null && memo == null && spendDate == null && isTotal == null;
 	}
 }
