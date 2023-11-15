@@ -2,6 +2,7 @@ package com.wanted.moneyway.standard.util;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,6 +42,10 @@ public class Ut {
 		public static LocalDate getEndOfMonth(LocalDate date) {
 			YearMonth yearMonth = YearMonth.from(date);
 			return yearMonth.atEndOfMonth();
+		}
+
+		public static int getDaysBetweenDates(LocalDate date1, LocalDate date2) {
+			return (int) ChronoUnit.DAYS.between(date1, date2) + 1;
 		}
 
 	}
