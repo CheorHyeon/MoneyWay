@@ -71,7 +71,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping("{id}")
+	@GetMapping("/{id}")
 	@Operation(summary = "상세 지출 내역 조회")
 	public RsData expenditures(@AuthenticationPrincipal User user, @PathVariable Long id) {
 		RsData<Expenditure> rsRead = expenditureService.search(user.getUsername(), id);
@@ -110,4 +110,11 @@ public class ApiV1ExpenditureController {
 		return rsSearch;
 	}
 
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/remaining")
+	@Operation(summary = "이번달 남은 예산 조회(총액 + 카테고리별)")
+	public RsData remainingBudget(@AuthenticationPrincipal User user) {
+		RsData rsRemaining = expenditureService.reaminingBudget(user.getUsername());
+		return rsRemaining;
+	}
 }

@@ -120,4 +120,16 @@ public class PlanService {
 		dto.setTransfer((int) Math.ceil(totalPrice * planPercentDTO.getTransfer()));
 		return dto;
 	}
+
+	/*
+		사용자 별 등록된 지출 계획 반환 메서드
+	 */
+	public RsData<List<Plan>> getAllByMember(Member member) {
+		List<Plan> allByMember = planRepository.findAllByMember(member);
+		if(allByMember.isEmpty())
+			return RsData.of("F-1", "설정한 지출 계획이 없습니다. 등록 후 이용해주세요");
+
+		return RsData.of("S-1", "지출 계획 조회 성공", allByMember);
+
+	}
 }

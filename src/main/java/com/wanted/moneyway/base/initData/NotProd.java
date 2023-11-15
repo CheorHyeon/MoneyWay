@@ -48,10 +48,16 @@ public class NotProd {
 				.password(password)
 				.build();
 
+			Member cheorHyeon = Member.builder()
+				.userName("cheorhyeon")
+				.password(password)
+				.build();
+
 			memberList.add(user1);
 			memberList.add(user2);
 			memberList.add(user3);
 			memberList.add(user4);
+			memberList.add(cheorHyeon);
 			memberRepository.saveAll(memberList);
 
 			List<Category> categoryList = new ArrayList<>();
@@ -175,6 +181,89 @@ public class NotProd {
 			}
 
 			expenditureRepository.saveAll(expenditureList);
+
+			// cheorHyeon 더미데이터 생성
+
+			cafe = 100_000;
+			dwelling = 400_000;
+			food = 500_000;
+			communication = 50_000;
+			education = 0;
+			shopping = 100_000;
+			transfer = 50_000;
+			others = 100_000;
+			PlanDTO planDTO2 = new PlanDTO(food, cafe, education, dwelling, communication, shopping, transfer, others);
+
+			planService.register(planDTO2, cheorHyeon.getUserName());
+
+			List<Expenditure> cheorHyeonExpenditureList = new ArrayList<>();
+
+			Expenditure ex1 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category1)
+				.memo("이마트 장보기")
+				.spendingPrice(100_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex2 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category1)
+				.memo("친구랑 포장마차 붕어빵 내기 짐")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex3 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category2)
+				.memo("스타벅스 음료 2잔")
+				.spendingPrice(10_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex4 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category4)
+				.memo("LH이자")
+				.spendingPrice(140_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex5 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category5)
+				.memo("통신비")
+				.spendingPrice(20_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex6 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category7)
+				.memo("저번달 교통대금")
+				.spendingPrice(50_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			Expenditure ex7 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category8)
+				.memo("친구 결혼식 축의금")
+				.spendingPrice(100_000)
+				.spendDate(LocalDate.now())
+				.build();
+
+			cheorHyeonExpenditureList.add(ex1);
+			cheorHyeonExpenditureList.add(ex2);
+			cheorHyeonExpenditureList.add(ex3);
+			cheorHyeonExpenditureList.add(ex4);
+			cheorHyeonExpenditureList.add(ex5);
+			cheorHyeonExpenditureList.add(ex6);
+			cheorHyeonExpenditureList.add(ex7);
+
+			expenditureRepository.saveAll(cheorHyeonExpenditureList);
+
 		};
 	}
 }
