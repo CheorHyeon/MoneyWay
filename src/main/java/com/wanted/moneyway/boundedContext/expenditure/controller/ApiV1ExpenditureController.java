@@ -71,7 +71,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping("{id}")
+	@GetMapping("/{id}")
 	@Operation(summary = "상세 지출 내역 조회")
 	public RsData expenditures(@AuthenticationPrincipal User user, @PathVariable Long id) {
 		RsData<Expenditure> rsRead = expenditureService.search(user.getUsername(), id);
@@ -109,5 +109,4 @@ public class ApiV1ExpenditureController {
 		RsData<SearchResult> rsSearch = expenditureService.search(user.getUsername(), searchRequestDTO);
 		return rsSearch;
 	}
-
 }
