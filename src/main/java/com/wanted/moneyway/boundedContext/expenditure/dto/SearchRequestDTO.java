@@ -20,11 +20,11 @@ public class SearchRequestDTO {
 	private LocalDate endDate = LocalDate.now();
 
 	@Schema(description = "조회 카테고리 Id를 입력해주세요(기본값 : 전체 데이터)", example = "2")
-	private Long categoryId = null;
+	private Long categoryId;
 	@Schema(description = "조회 최소 금액을 입력해주세요(미입력 시 금액 상관 없이 전체 조회)", example = "3000")
-	private Integer minPrice = -1;
+	private Integer minPrice;
 	@Schema(description = "조회 최대 금액을 입력해주세요(미입력 시 금액 상관 없이 전체 조회)", example = "500000")
-	private Integer maxPrice = -1;
+	private Integer maxPrice;
 
 	@Schema(description = "조회할 페이지 번호를 입력해주세요(기본값 : 0)", example = "0")
 	private Integer pageNumber = 0;

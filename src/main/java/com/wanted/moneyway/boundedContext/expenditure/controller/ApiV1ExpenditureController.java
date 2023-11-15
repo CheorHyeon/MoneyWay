@@ -109,4 +109,12 @@ public class ApiV1ExpenditureController {
 		RsData<SearchResult> rsSearch = expenditureService.search(user.getUsername(), searchRequestDTO);
 		return rsSearch;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/remaining")
+	@Operation(summary = "이번달 남은 예산 조회(총액 + 카테고리별)")
+	public RsData remainingBudget(@AuthenticationPrincipal User user) {
+		RsData rsRemaining = expenditureService.reaminingBudget(user.getUsername());
+		return rsRemaining;
+	}
 }

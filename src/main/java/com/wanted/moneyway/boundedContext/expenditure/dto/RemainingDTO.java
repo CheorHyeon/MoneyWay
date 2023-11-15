@@ -1,5 +1,7 @@
 package com.wanted.moneyway.boundedContext.expenditure.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,8 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CategorySum {
-	private Long categoryId;
-	private String categoryName;
-	private Integer spending;
+public class RemainingDTO {
+	private Integer totalRemainingPrice;
+	private List<CategorySum> remainingPriceByCategoy;
 }

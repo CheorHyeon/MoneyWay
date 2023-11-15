@@ -1,5 +1,7 @@
 package com.wanted.moneyway.standard.util;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,5 +29,19 @@ public class Ut {
 				return null;
 			}
 		}
+	}
+
+	public static class date {
+		// 해당 연월의 첫날 출력 메서드
+		public static LocalDate getStartOfMonth(LocalDate date) {
+			return date.withDayOfMonth(1);
+		}
+
+		// 해당 연,월의 마지막 날을 구하는 메서드
+		public static LocalDate getEndOfMonth(LocalDate date) {
+			YearMonth yearMonth = YearMonth.from(date);
+			return yearMonth.atEndOfMonth();
+		}
+
 	}
 }
