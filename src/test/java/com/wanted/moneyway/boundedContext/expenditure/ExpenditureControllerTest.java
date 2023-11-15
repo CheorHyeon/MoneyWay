@@ -285,4 +285,33 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.msg").value("금일 지출액 추천 성공"))
 			.andExpect(jsonPath("$.data.totalRemainingPrice").value(870000));
 	}
+
+	@Test
+	@DisplayName("PATCH /api/v1/expenditure/{id} 는 지출 내역을 수정하며, 일부 속성만 줘도 변경된다.")
+	void t10() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		// 기존 10만원 -> 4만원 변경 시도
+		ResultActions resultActions = mvc
+			.perform(
+				patch("/api/v1/expenditure/31")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+					.content("""
+						{
+							  "spendingPrice": "40000"
+						}
+						""".stripIndent())
+					.contentType(new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8))
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("지출 내역 변경 성공"))
+			.andExpect(jsonPath("$.data.spendingPrice").value(40000));
+	}
 }
