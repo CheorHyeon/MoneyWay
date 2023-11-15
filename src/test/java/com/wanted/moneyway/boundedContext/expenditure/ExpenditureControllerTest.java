@@ -233,4 +233,29 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.data.expenditures.content[1].memo").value("테스트 카페/간식1"))
 			.andExpect(jsonPath("$.data.expenditures.content[1].spendingPrice").value(10_000));
 	}
+
+	@Test
+	@DisplayName("GET /api/v1/expenditure/remaining 는 이번달 남은 예산(총액, 카테고리별) 조회가 가능하다.")
+	void t8() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/remaining")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("이번달 남은 지출액 조회 성공"))
+			.andExpect(jsonPath("$.data.totalRemainingPrice").value(870000))
+			.andExpect(jsonPath("$.data.remainingPriceByCategoy[0].categoryId").value(1))
+			.andExpect(jsonPath("$.data.remainingPriceByCategoy[0].categoryName").value("식비"))
+			.andExpect(jsonPath("$.data.remainingPriceByCategoy[0].spending").value(390000));
+	}
 }
