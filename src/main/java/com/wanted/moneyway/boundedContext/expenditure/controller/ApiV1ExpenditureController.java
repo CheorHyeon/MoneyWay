@@ -117,4 +117,12 @@ public class ApiV1ExpenditureController {
 		RsData rsRemaining = expenditureService.reaminingBudget(user.getUsername());
 		return rsRemaining;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/recommend")
+	@Operation(summary = "오늘의 지출 금액 추천 API")
+	public RsData recommendBudget(@AuthenticationPrincipal User user) {
+		RsData rsRecommend = expenditureService.recommendBudget(user.getUsername());
+		return rsRecommend;
+	}
 }
