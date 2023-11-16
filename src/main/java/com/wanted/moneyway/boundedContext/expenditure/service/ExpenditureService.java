@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
+import com.wanted.moneyway.boundedContext.expenditure.dto.BudgetCalculationResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RecommendDTO;
@@ -231,59 +232,26 @@ public class ExpenditureService {
 		LocalDate endOfMonth = Ut.date.getEndOfMonth(today);
 
 		// 지출액 구할때 동적 쿼리 생성되지 않고 날짜만 적용되도록 설정용 DTO 객체 생성
+		// 1일 ~ 어제까지 날짜 사용한 데이터 추출
 		SearchRequestDTO searchRequestDTO = new SearchRequestDTO();
 		searchRequestDTO.setStartDate(startOfMonth);
-		searchRequestDTO.setEndDate(today);
+		searchRequestDTO.setEndDate(today.minusDays(1));
 
 		// 지출에서 이번달 지출액 구하기
-		// 오늘 날짜까지 지출액 총합 / 카테고리별 금액이 나옴
+		// 어제 날짜까지 지출액 총합 / 카테고리별 금액이 나옴
 		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
 			searchRequestDTO);
 
-		// 카테고리별 합계 금액
-		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
-		List<CategorySum> diffCategorySumList = new ArrayList<>();
-
-		// 실제 지출액 총 금액
-		Integer expenditureTotal = totalAndCategorySum.getTotalSpending();
-
-		// 1. 지출 목표량 남은 금액 : 목표 - 현재까지 사용한 총 금액
-		Integer diffTotal = totalPrice - expenditureTotal;
-
 		// 말일까지 남은 일수 계산
 		int diffDays = Ut.date.getDaysBetweenDates(today, endOfMonth);
-		// 2. 오늘 사용할 총액 : 지출 목표량 남은 금액 / 말일까지 남은 일
-		Integer todayTotal = diffTotal / diffDays;
 
-		// 3. 각 카테고리별 추천액 : 각 카테고리별 남은 금액 총액 / 말일까지 남은일
-		for (Plan p : data) {
-			Optional<CategorySum> optionalCategorySum = categorySumList.stream()
-				.filter(categorySum -> p.getCategory().getId().equals(categorySum.getCategoryId()))
-				.findFirst();
+		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 예산 추천
+		BudgetCalculationResult result = calculateBudget(data, totalAndCategorySum, diffDays);
 
-			CategorySum diffCategorySum;
-			// 지출 내역에 해당 카테고리가 있는 경우
-			if (optionalCategorySum.isPresent()) {
-				CategorySum categorySum = optionalCategorySum.get();
-				diffCategorySum = CategorySum
-					.builder()
-					.categoryId(p.getCategory().getId())
-					.categoryName(p.getCategory().getNameH())
-					.spending((p.getBudget() - categorySum.getSpending()) / diffDays)
-					.build();
-			}
-			// 지출 내역에 해당 카테고리가 없는 경우
-			else {
-				diffCategorySum = CategorySum
-					.builder()
-					.categoryId(p.getCategory().getId())
-					.categoryName(p.getCategory().getNameH())
-					.spending(p.getBudget() / diffDays)
-					.build();
-			}
-
-			diffCategorySumList.add(diffCategorySum);
-		}
+		// 예산 추천 결과 추출
+		Integer diffTotal = result.getDiffTotal();
+		List<CategorySum> diffCategorySumList = result.getDiffCategorySumList();
+		Integer todayTotal = result.getTodayTotal();
 
 		// 4. 응원 메세지
 		String message = null;
@@ -315,6 +283,57 @@ public class ExpenditureService {
 		return RsData.of("S-1", "금일 지출액 추천 성공", recommendDTO);
 	}
 
+	// 예산 계획과 현재까지 지출액을 받아 추천 예산을 계산
+	private BudgetCalculationResult calculateBudget(List<Plan> plans, TotalAndCategorySumDTO totalAndCategorySum, int remainingDays) {
+		// 카테고리별 합계 금액
+		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
+		List<CategorySum> diffCategorySumList = new ArrayList<>();
+
+		// 실제 지출액 총 금액
+		Integer expenditureTotal = totalAndCategorySum.getTotalSpending();
+
+		// 지출 목표 총 사용 금액 추출
+		Integer totalPrice = plans.stream()
+			.mapToInt(a -> a.getBudget())
+			.sum();
+
+		// 지출 목표량 남은 금액 : 목표 - 현재까지 사용한 총 금액
+		Integer diffTotal = totalPrice - expenditureTotal;
+
+		// 오늘 사용할 총액 : 지출 목표량 남은 금액 / 말일까지 남은 일
+		Integer todayTotal = diffTotal / remainingDays;
+
+		// 각 카테고리별 추천액 : 각 카테고리별 남은 금액 총액 / 말일까지 남은일
+		for (Plan p : plans) {
+			Optional<CategorySum> optionalCategorySum = categorySumList.stream()
+				.filter(categorySum -> p.getCategory().getId().equals(categorySum.getCategoryId()))
+				.findFirst();
+
+			CategorySum diffCategorySum;
+			// 지출 내역에 해당 카테고리가 있는 경우
+			if (optionalCategorySum.isPresent()) {
+				CategorySum categorySum = optionalCategorySum.get();
+				diffCategorySum = CategorySum.builder()
+					.categoryId(p.getCategory().getId())
+					.categoryName(p.getCategory().getNameH())
+					.spending((p.getBudget() - categorySum.getSpending()) / remainingDays)
+					.build();
+			}
+			// 지출 내역에 해당 카테고리가 없는 경우
+			else {
+				diffCategorySum = CategorySum.builder()
+					.categoryId(p.getCategory().getId())
+					.categoryName(p.getCategory().getNameH())
+					.spending(p.getBudget() / remainingDays)
+					.build();
+			}
+
+			diffCategorySumList.add(diffCategorySum);
+		}
+
+		return new BudgetCalculationResult(diffTotal, todayTotal, diffCategorySumList);
+	}
+
 	@Transactional
 	public RsData modifyExpenditure(String userName, ExpenditureDTO expenditureDTO, Long expenditureId) {
 		Member member = memberService.get(userName);
@@ -330,10 +349,12 @@ public class ExpenditureService {
 		Expenditure modifyExpenditure = expenditure.toBuilder()
 			.category(expenditureDTO.getCategoryId() == null ? expenditure.getCategory() :
 				categoryService.get(expenditureDTO.getCategoryId()))
-			.isTotal(expenditureDTO.getIsTotal() == null? expenditure.getIsTotal() : expenditureDTO.getIsTotal())
-			.spendDate(expenditureDTO.getSpendDate() == null? expenditure.getSpendDate() : expenditureDTO.getSpendDate())
-			.memo(expenditureDTO.getMemo() == null? expenditure.getMemo() : expenditureDTO.getMemo())
-			.spendingPrice(expenditureDTO.getSpendingPrice() == null? expenditure.getSpendingPrice() : expenditureDTO.getSpendingPrice())
+			.isTotal(expenditureDTO.getIsTotal() == null ? expenditure.getIsTotal() : expenditureDTO.getIsTotal())
+			.spendDate(
+				expenditureDTO.getSpendDate() == null ? expenditure.getSpendDate() : expenditureDTO.getSpendDate())
+			.memo(expenditureDTO.getMemo() == null ? expenditure.getMemo() : expenditureDTO.getMemo())
+			.spendingPrice(expenditureDTO.getSpendingPrice() == null ? expenditure.getSpendingPrice() :
+				expenditureDTO.getSpendingPrice())
 			.build();
 
 		expenditureRepository.save(modifyExpenditure);
