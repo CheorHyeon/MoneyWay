@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class CategorySumWithDanger {
 	private Long categoryId;
 	private String categoryName;
-	private Integer todaySpending;
 	private Integer recommendTodaySpending;
+	private Integer todaySpending;
 	private Double danger;
 }

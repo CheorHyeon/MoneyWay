@@ -14,11 +14,13 @@ import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
 import com.wanted.moneyway.boundedContext.expenditure.dto.BudgetCalculationResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
+import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySumWithDanger;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RecommendDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RemainingDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
+import com.wanted.moneyway.boundedContext.expenditure.dto.TodayDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndCategorySumDTO;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.expenditure.repository.ExpenditureRepository;
@@ -360,5 +362,120 @@ public class ExpenditureService {
 		expenditureRepository.save(modifyExpenditure);
 
 		return RsData.of("S-1", "지출 내역 변경 성공", modifyExpenditure);
+	}
+
+	/*
+		오늘 지출 내용을 총액과 카테고리별 금액으로 알려주는 메서드
+		컨설팅의 일부로 아래 내용을 추가로 제공
+		- 오늘 적절 금액 : 오늘 사용했으면 적절했을 금액
+		- 오늘 지출 금액 : 오늘 기준 사용한 총 금액
+		- 위험도 : 카테고리별 적정 금액, 지출금액의 차이를 위험도로 나타냄
+	 */
+	public RsData getToday(String userName) {
+		Member member = memberService.get(userName);
+
+		// 예산 계획 추출
+		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
+		if (rsAllByMember.isFail())
+			return rsAllByMember;
+
+		List<Plan> data = rsAllByMember.getData();
+		// 지출 목표 총 사용 금액 추출
+		Integer totalPrice = data.stream()
+			.mapToInt(a -> a.getBudget())
+			.sum();
+
+		LocalDate today = LocalDate.now();
+
+		// 이번달 1일 추출
+		LocalDate startOfMonth = Ut.date.getStartOfMonth(today);
+
+		// 이번달 말일 추출
+		LocalDate endOfMonth = Ut.date.getEndOfMonth(today);
+
+		// 지출액 구할때 동적 쿼리 생성되지 않고 날짜만 적용되도록 설정용 DTO 객체 생성
+		SearchRequestDTO searchRequestDTO = new SearchRequestDTO();
+		searchRequestDTO.setStartDate(startOfMonth);
+		searchRequestDTO.setEndDate(today.minusDays(1)); // 어제 날짜까지 구해야 오늘 추천액 계산
+
+		// 지출에서 이번달 지출액 구하기
+		// 어제 날짜까지 지출액 총합 / 카테고리별 금액이 나옴
+		TotalAndCategorySumDTO totalBeforeDayAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			searchRequestDTO);
+
+		// 오늘 사용한 금액을 구하기 위한 DTO 객체 생성
+		SearchRequestDTO todaySearchRequestDTO = SearchRequestDTO
+			.builder()
+			.startDate(LocalDate.now())
+			.endDate(LocalDate.now())
+			.build();
+
+		// 말일까지 남은 일수 계산
+		int diffDays = Ut.date.getDaysBetweenDates(today, endOfMonth);
+
+		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 예산 추천
+		BudgetCalculationResult result = calculateBudget(data, totalBeforeDayAndCategorySum, diffDays);
+
+		// 예산 추천 결과 추출
+		Integer diffTotal = result.getDiffTotal(); // 전체 남은액
+		List<CategorySum> diffCategorySumList = result.getDiffCategorySumList(); // 각 카테고리별 추천액
+		Integer recommendTodayTotalPrice = result.getTodayTotal(); // 오늘 사용 가능한 총액 추천
+
+		// 오늘 사용한 총액과 카테고리별 금액
+		TotalAndCategorySumDTO todayTotalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			todaySearchRequestDTO);
+
+		// 결과용
+		Integer todayTotalPrice = todayTotalAndCategorySum.getTotalSpending(); // 오늘 사용한 총액
+		List<CategorySum> todayPriceEachCategory = todayTotalAndCategorySum.getCategorySumList();
+
+		// 각각 실제 금액과 위험도 계산
+		// 반환 형태
+		// 1. 오늘 추천 총액 :  recommendTodayTotalPrice
+		// 2. 실제 사용한 오늘 총액 : todayTotalPrice
+		// 3. 각 카테고리별 실제 사용금액 및 위험도 : 구해야 함
+
+		List<CategorySumWithDanger> todayResultWithDangerList = new ArrayList<>();
+
+		for (CategorySum c : diffCategorySumList) {
+			// 오늘 추천한 카테고리를 지출했는지 검사
+			Optional<CategorySum> optionalCategorySum = todayPriceEachCategory.stream()
+				.filter(categorySum -> c.getCategoryId().equals(categorySum.getCategoryId()))
+				.findFirst();
+
+			CategorySumWithDanger categorySumWithDanger;
+			// 지출 내역에 해당 카테고리가 있는 경우
+			if (optionalCategorySum.isPresent()) {
+				CategorySum categorySum = optionalCategorySum.get();
+				categorySumWithDanger = CategorySumWithDanger.builder()
+					.categoryId(categorySum.getCategoryId())
+					.categoryName(categorySum.getCategoryName())
+					.recommendTodaySpending(c.getSpending())  // 추천 금액
+					.todaySpending(categorySum.getSpending())  // 실제 사용금액
+					.danger(Math.round(((double)categorySum.getSpending() / c.getSpending()) * 1000) / 10.0) // 위험도 : 사용액 / 추천액 2번째 자리에서 반올림
+					.build();
+			}
+			// 지출 내역에 해당 카테고리가 없는 경우
+			else {
+				categorySumWithDanger = CategorySumWithDanger.builder()
+					.categoryId(c.getCategoryId())
+					.categoryName(c.getCategoryName())
+					.recommendTodaySpending(c.getSpending())  // 추천 금액
+					.todaySpending(0)  // 실제 사용금액
+					.danger(0.0) // 사용액이 없으니 0
+					.build();
+			}
+
+			todayResultWithDangerList.add(categorySumWithDanger);
+		}
+
+		// DTO 객체
+		TodayDTO todayDTO = TodayDTO.builder()
+			.recommendTodayTotalPrice(recommendTodayTotalPrice)
+			.todayTotalPrice(todayTotalPrice)
+			.categorySumWithDanger(todayResultWithDangerList)
+			.build();
+
+		return RsData.of("S-1", "오늘 지출 내역과 위험도 반환 성공", todayDTO);
 	}
 }
