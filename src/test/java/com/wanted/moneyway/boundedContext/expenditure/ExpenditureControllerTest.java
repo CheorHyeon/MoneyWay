@@ -314,4 +314,31 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.msg").value("지출 내역 변경 성공"))
 			.andExpect(jsonPath("$.data.spendingPrice").value(40000));
 	}
+
+	/*
+		오늘 지출한 총액, 카테고리별 금액을 오늘 추천해준 금액과 비교하는 결과를 반환합니다.
+		실제로는 차이 금액과 위험도로 테스트를 해야하지만, 테스트를 수행하는 시점에 따라서 추천 금액과 위험도가 달라지기 때문에
+		오늘 지출한 총 금액과 메세지만 테스트합니다.
+ 	*/
+	@Test
+	@DisplayName("GET /api/v1/expenditure/today 는 오늘 지출 내역과 위험도를 알려준다.")
+	void t11() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/today")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("오늘 지출 내역과 위험도 반환 성공"))
+			.andExpect(jsonPath("$.data.todayTotalPrice").value(430000));
+	}
 }

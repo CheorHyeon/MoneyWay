@@ -136,4 +136,12 @@ public class ApiV1ExpenditureController {
 		RsData rsModify = expenditureService.modifyExpenditure(user.getUsername(), expenditureDTO, id);
 		return rsModify;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping ("/today")
+	@Operation(summary = "오늘 지출 내역 안내 API")
+	public RsData today(@AuthenticationPrincipal User user) {
+		RsData rsToday = expenditureService.getToday(user.getUsername());
+		return rsToday;
+	}
 }
