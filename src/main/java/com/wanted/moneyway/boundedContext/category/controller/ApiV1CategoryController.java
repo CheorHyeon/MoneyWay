@@ -11,6 +11,7 @@ import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ public class ApiV1CategoryController {
 
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping("")
+	@Operation(summary = "예산 카테고리 목록 반환 API")
 	public RsData list() {
 		RsData<List<Category>> rsCategories = categoryService.getAll();
 
