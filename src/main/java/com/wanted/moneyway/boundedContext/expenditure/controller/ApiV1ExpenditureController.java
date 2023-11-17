@@ -160,4 +160,12 @@ public class ApiV1ExpenditureController {
 		RsData rsLastWeek = expenditureService.getLastWeekStatisics(user.getUsername());
 		return rsLastWeek;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping ("/statistics/otheruser")
+	@Operation(summary = "지출 통계 기능 3 - 다른 유저들 평균 지출액과 나의 지출액 비율 API")
+	public RsData statisticOtherUser(@AuthenticationPrincipal User user) {
+		RsData rsOtherUser = expenditureService.getOtherUserStatisics(user.getUsername());
+		return rsOtherUser;
+	}
 }

@@ -25,6 +25,8 @@ import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TodayDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndCategorySumDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndOthersAverage;
+import com.wanted.moneyway.boundedContext.expenditure.dto.UserExpenditureComparisonDTO;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.expenditure.repository.ExpenditureRepository;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
@@ -664,5 +666,34 @@ public class ExpenditureService {
 
 		return RsData.of("S-1", "지난 요일과 총액 비교 성공", result);
 
+	}
+
+	public RsData getOtherUserStatisics(String userName) {
+		Member member = memberService.get(userName);
+
+		// 오늘 날짜
+		LocalDate today = LocalDate.now();
+
+		// 한달전의 (1일~오늘 일자) 지출 추출용 DTO
+		SearchRequestDTO searchRequestDTO = SearchRequestDTO.builder()
+			.endDate(today)
+			.startDate(today)
+			.build();
+
+		TotalAndOthersAverage totalAndOthersAverage = expenditureRepository.getTotalAndOthersAverage(member,
+			searchRequestDTO);
+
+		Integer userTotal = totalAndOthersAverage.getTotalPrice();
+		Integer otherTotalAvg = totalAndOthersAverage.getOthersAverage();
+
+		UserExpenditureComparisonDTO result = UserExpenditureComparisonDTO
+			.builder()
+			.othersAverage(otherTotalAvg)
+			.totalPrice(userTotal)
+			// 비율 : 나의 지출액 / 다른 사람들 평균 지출액 2번째 자리에서 반올림
+			.expenditureRatio((Math.round(((double)userTotal / otherTotalAvg) * 1000) / 10.0))
+			.build();
+
+		return RsData.of("S-1", "다른 사람들 평균 지출 대비 나의 지출 비율 반환 성공", result);
 	}
 }
