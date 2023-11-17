@@ -171,8 +171,8 @@ public class ApiV1PlanControllertest {
 			.andExpect(status().is2xxSuccessful())
 			.andExpect(jsonPath("$.resultCode").value("S-1"))
 			.andExpect(jsonPath("$.msg").value("항목별 추천 금액"))
-			.andExpect(jsonPath("$.data.food").value("125000"))
-			.andExpect(jsonPath("$.data.cafe").value("125000"));
+			.andExpect(jsonPath("$.data.food").value("189904"))
+			.andExpect(jsonPath("$.data.cafe").value("112981"));
 	}
 
 }

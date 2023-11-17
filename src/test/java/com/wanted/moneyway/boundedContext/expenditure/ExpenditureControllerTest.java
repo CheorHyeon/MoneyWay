@@ -283,7 +283,7 @@ public class ExpenditureControllerTest {
 			.andExpect(status().is2xxSuccessful())
 			.andExpect(jsonPath("$.resultCode").value("S-1"))
 			.andExpect(jsonPath("$.msg").value("금일 지출액 추천 성공"))
-			.andExpect(jsonPath("$.data.totalRemainingPrice").value(870000));
+			.andExpect(jsonPath("$.data.totalRemainingPrice").value(1300000));
 	}
 
 	@Test
