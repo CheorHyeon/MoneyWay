@@ -674,7 +674,7 @@ public class ExpenditureService {
 		// 오늘 날짜
 		LocalDate today = LocalDate.now();
 
-		// 한달전의 (1일~오늘 일자) 지출 추출용 DTO
+		// 오늘 날짜로 데이터 구할 DTO 객체 생성
 		SearchRequestDTO searchRequestDTO = SearchRequestDTO.builder()
 			.endDate(today)
 			.startDate(today)
