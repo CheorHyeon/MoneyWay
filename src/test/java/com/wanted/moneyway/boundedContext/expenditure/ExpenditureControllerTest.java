@@ -423,4 +423,31 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.data.categoryRatioList[3].amonthAgoSpending").value(0))
 			.andExpect(jsonPath("$.data.categoryRatioList[3].compareRatio").isEmpty());
 	}
+
+	/*
+		7일전 지출과 오늘 지출 총액을 비교한 결과를 반환합니다.
+	 */
+	@Test
+	@DisplayName("GET /api/v1/expenditure/statistics/lastweek 는 7일전 지출과 오늘 지출을 비교합니다.")
+	void t13() throws Exception {
+		// "user3"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("user3");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/statistics/lastweek")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("지난 요일과 총액 비교 성공"))
+			.andExpect(jsonPath("$.data.todayTotal").value(200000))
+			.andExpect(jsonPath("$.data.totalRatio").value(200))
+			.andExpect(jsonPath("$.data.aweekAgoTotal").value(100000));
+	}
 }
