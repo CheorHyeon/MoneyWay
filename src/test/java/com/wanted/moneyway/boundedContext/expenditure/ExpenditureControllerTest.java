@@ -341,4 +341,86 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.msg").value("오늘 지출 내역과 위험도 반환 성공"))
 			.andExpect(jsonPath("$.data.todayTotalPrice").value(430000));
 	}
+
+	/*
+		지출 통계 첫번째 기능 : 지난달 대비 총액, 카테고리 별 소비율을 통계내는 기능을 구현합니다.
+		오늘이 10일차라면, 지난달 10일차 까지의 데이터를 대상으로 비교헙니다.
+		ex) 식비 지난달 대비 150%
+		- case 1 : 총액 및 비율
+		- case 2 : 카테고리별 비율
+		- case 3 : 이번달 신규 카테고리의 경우 비율 없이 금액만 표시
+ 	*/
+	@Test
+	@DisplayName("GET /api/v1/expenditure/statistics/lastmonth 는 현재 일자의 지난달과 이번달 대비 지출금액과 비율을 반환합니다.")
+	void t12_1() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/statistics/lastmonth")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("지난달 대비 오늘 일자 기준 사용량 통계 데이터 추출 성공"))
+			.andExpect(jsonPath("$.data.currentTotal").value(430000))
+			.andExpect(jsonPath("$.data.amonthAgoTotal").value(106000))
+			.andExpect(jsonPath("$.data.totalRatio").value(405.7));
+	}
+
+	@Test
+	@DisplayName("GET /api/v1/expenditure/statistics/lastmonth 는 현재 일자의 지난달과 이번달 대비 각 카테고리별 지출금액과 비율 또한 반환합니다.")
+	void t12_2() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/statistics/lastmonth")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("지난달 대비 오늘 일자 기준 사용량 통계 데이터 추출 성공"))
+			.andExpect(jsonPath("$.data.categoryRatioList[0].categoryName").value("식비"))
+			.andExpect(jsonPath("$.data.categoryRatioList[0].todaySpending").value(110000))
+			.andExpect(jsonPath("$.data.categoryRatioList[0].amonthAgoSpending").value(100000))
+			.andExpect(jsonPath("$.data.categoryRatioList[0].compareRatio").value(110));
+	}
+
+	@Test
+	@DisplayName("GET /api/v1/expenditure/statistics/lastmonth 는 지난달에 소비하지 않았지만 이번달에 소비한 카테고리 별 금액은 비율 없이 금액만 반환합니다.")
+	void t12_3() throws Exception {
+		// "cheorhyeon"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("cheorhyeon");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/statistics/lastmonth")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("지난달 대비 오늘 일자 기준 사용량 통계 데이터 추출 성공"))
+			.andExpect(jsonPath("$.data.categoryRatioList[3].categoryName").value("통신"))
+			.andExpect(jsonPath("$.data.categoryRatioList[3].todaySpending").value(20000))
+			.andExpect(jsonPath("$.data.categoryRatioList[3].amonthAgoSpending").value(0))
+			.andExpect(jsonPath("$.data.categoryRatioList[3].compareRatio").isEmpty());
+	}
 }
