@@ -2,7 +2,6 @@ package com.wanted.moneyway.boundedContext.expenditure.repository;
 
 import static com.wanted.moneyway.boundedContext.category.entity.QCategory.*;
 import static com.wanted.moneyway.boundedContext.expenditure.entity.QExpenditure.*;
-import static com.wanted.moneyway.boundedContext.member.entity.QMember.*;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -22,9 +21,7 @@ import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndCategorySumDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndOthersAverage;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
-import com.wanted.moneyway.boundedContext.expenditure.entity.QExpenditure;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
-import com.wanted.moneyway.boundedContext.member.entity.QMember;
 
 import lombok.RequiredArgsConstructor;
 
@@ -128,25 +125,40 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 	 */
 	@Override
 	public TotalAndOthersAverage getTotalAndOthersAverage(Member targetMember, SearchRequestDTO searchRequestDTO) {
-		Integer othersAvg = jpaQueryFactory.select(expenditure.spendingPrice.avg())
+		// 대상 사용자 제외한 오늘 지출금액 총합
+		Integer othersSumPrice = jpaQueryFactory.select(expenditure.spendingPrice.sum())
 			.from(expenditure)
 			.where(expenditure.member.eq(targetMember).not(),
-				expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()))
+				expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.isTotal.eq(true))
 			.fetchOne()
 			.intValue();
 
+		// 대상 사용자 제외한 오늘 지출 있는 회원 수
+		Integer othersCount = jpaQueryFactory.select(expenditure.member.countDistinct())
+			.from(expenditure)
+			.where(expenditure.member.eq(targetMember).not(),
+				expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.isTotal.eq(true))
+			.fetchOne()
+			.intValue();
+
+		// 다른 사람들 평균액
+		Integer othersAvg = othersSumPrice / othersCount;
+
+		// 대상 사용자의 오늘 지출 총액을 구하는 쿼리
 		Integer total = jpaQueryFactory
 			.select(expenditure.spendingPrice.sum())
 			.from(expenditure)
 			.where(expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
-				expenditure.member.eq(targetMember))
+				expenditure.member.eq(targetMember),
+				expenditure.isTotal.eq(true))
 			.fetchOne();
 
 		return TotalAndOthersAverage.builder()
 			.othersAverage(othersAvg)
 			.totalPrice(total)
 			.build();
-
 	}
 
 	/*
