@@ -264,6 +264,53 @@ public class NotProd {
 
 			expenditureRepository.saveAll(cheorHyeonExpenditureList);
 
+			/*
+				지난달 소비 더미 데이터 생성
+			 */
+
+			// 비워줘서 객체 재사용
+			cheorHyeonExpenditureList.clear();
+
+			Expenditure ex10 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category1)
+				.memo("홍길동과 1차 삼겹살집")
+				.spendingPrice(60_000)
+				.spendDate(LocalDate.now().minusDays(31))
+				.build();
+
+			Expenditure ex11 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category1)
+				.memo("홍길동과 2차 포차")
+				.spendingPrice(40_000)
+				.spendDate(LocalDate.now().minusDays(31))
+				.build();
+
+			Expenditure ex12 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category2)
+				.memo("빽다방")
+				.spendingPrice(2_000)
+				.spendDate(LocalDate.now().minusDays(32))
+				.build();
+
+			Expenditure ex13 = Expenditure.builder()
+				.member(cheorHyeon)
+				.category(category2)
+				.memo("빽다방")
+				.spendingPrice(4_000)
+				.spendDate(LocalDate.now().minusDays(32))
+				.build();
+
+			cheorHyeonExpenditureList.add(ex10);
+			cheorHyeonExpenditureList.add(ex11);
+			cheorHyeonExpenditureList.add(ex12);
+			cheorHyeonExpenditureList.add(ex13);
+
+			expenditureRepository.saveAll(cheorHyeonExpenditureList);
+
+
 		};
 	}
 }
