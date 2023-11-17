@@ -276,7 +276,7 @@ public class NotProd {
 				.category(category1)
 				.memo("홍길동과 1차 삼겹살집")
 				.spendingPrice(60_000)
-				.spendDate(LocalDate.now().minusDays(31))
+				.spendDate(LocalDate.now().minusMonths(1))
 				.build();
 
 			Expenditure ex11 = Expenditure.builder()
@@ -284,7 +284,7 @@ public class NotProd {
 				.category(category1)
 				.memo("홍길동과 2차 포차")
 				.spendingPrice(40_000)
-				.spendDate(LocalDate.now().minusDays(31))
+				.spendDate(LocalDate.now().minusMonths(1))
 				.build();
 
 			Expenditure ex12 = Expenditure.builder()
@@ -292,7 +292,7 @@ public class NotProd {
 				.category(category2)
 				.memo("빽다방")
 				.spendingPrice(2_000)
-				.spendDate(LocalDate.now().minusDays(32))
+				.spendDate(LocalDate.now().minusMonths(1))
 				.build();
 
 			Expenditure ex13 = Expenditure.builder()
@@ -300,7 +300,7 @@ public class NotProd {
 				.category(category2)
 				.memo("빽다방")
 				.spendingPrice(4_000)
-				.spendDate(LocalDate.now().minusDays(32))
+				.spendDate(LocalDate.now().minusMonths(1))
 				.build();
 
 			cheorHyeonExpenditureList.add(ex10);

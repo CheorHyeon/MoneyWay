@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
+import com.wanted.moneyway.boundedContext.expenditure.dto.AMothAgoRatioResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.BudgetCalculationResult;
+import com.wanted.moneyway.boundedContext.expenditure.dto.CategoryRatio;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySumWithDanger;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
@@ -286,7 +288,8 @@ public class ExpenditureService {
 	}
 
 	// 예산 계획과 현재까지 지출액을 받아 추천 예산을 계산
-	private BudgetCalculationResult calculateBudget(List<Plan> plans, TotalAndCategorySumDTO totalAndCategorySum, int remainingDays) {
+	private BudgetCalculationResult calculateBudget(List<Plan> plans, TotalAndCategorySumDTO totalAndCategorySum,
+		int remainingDays) {
 		// 카테고리별 합계 금액
 		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
 		List<CategorySum> diffCategorySumList = new ArrayList<>();
@@ -452,7 +455,8 @@ public class ExpenditureService {
 					.categoryName(categorySum.getCategoryName())
 					.recommendTodaySpending(c.getSpending())  // 추천 금액
 					.todaySpending(categorySum.getSpending())  // 실제 사용금액
-					.danger(Math.round(((double)categorySum.getSpending() / c.getSpending()) * 1000) / 10.0) // 위험도 : 사용액 / 추천액 2번째 자리에서 반올림
+					.danger(Math.round(((double)categorySum.getSpending() / c.getSpending()) * 1000)
+						/ 10.0) // 위험도 : 사용액 / 추천액 2번째 자리에서 반올림
 					.build();
 			}
 			// 지출 내역에 해당 카테고리가 없는 경우
@@ -477,5 +481,146 @@ public class ExpenditureService {
 			.build();
 
 		return RsData.of("S-1", "오늘 지출 내역과 위험도 반환 성공", todayDTO);
+	}
+
+	/*
+		오늘 지출 내역을 지난달 대비 총액, 카테고리별 소비율을 반환하는 메서드
+		- 오늘 날짜 지출 총액 vs 지난달의 오늘 일자 지출 총액 비율
+		- 오늘 날짜 카테고리별 지출 총액 vs 지난달의 오늘 일자 카테고리별 지출 총액 비율
+ 	*/
+	public RsData getLastMonthStatisics(String userName) {
+		Member member = memberService.get(userName);
+
+		// 오늘 날짜에서 1달 뺀 날짜 추출
+		LocalDate targetDate = LocalDate.now().minusMonths(1);
+
+		// 시작일 추출
+		LocalDate startTargetMonth = Ut.date.getStartOfMonth(targetDate);
+
+		// 한달전의 (1일~오늘 일자) 지출 추출용 DTO
+		SearchRequestDTO searchRequestDTO = SearchRequestDTO.builder()
+			.endDate(targetDate)
+			.startDate(startTargetMonth)
+			.build();
+
+		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			searchRequestDTO);
+
+		Integer aMonthAgoTotalPrice = totalAndCategorySum.getTotalSpending();
+		List<CategorySum> aMonthAgoCategorySumPrice = totalAndCategorySum.getCategorySumList();
+
+		// 오늘 날짜
+		LocalDate today = LocalDate.now();
+
+		// 이번달 시작일 추출
+		LocalDate startThisMonth = Ut.date.getStartOfMonth(today);
+
+		// 이번달 (1일 ~ 오늘 일자) 지출 -> 추출용 DTO 수정
+		searchRequestDTO = SearchRequestDTO.builder()
+			.startDate(startThisMonth)
+			.endDate(today)
+			.build();
+
+		// 이번달 지출 추출
+		totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member, searchRequestDTO);
+
+		Integer currentTotalPrice = totalAndCategorySum.getTotalSpending();
+		List<CategorySum> currentCategorySumPrice = totalAndCategorySum.getCategorySumList();
+
+		/*
+			결과 반환용 Data
+			- 이번달(1~현재 일자) 사용금액
+			- 저번달(1~현재 일자) 사용금액
+			- 이번달 / 저번달 전체 금액 비율
+			- 총 사용량 비교 (현재 사용량 / 지난달 오늘 일자까지 사용량) : totalRatio
+			- 각 카테고리별 사용량 비교 (카테고리별 현재 사용량 / 지난달 오늘 일자까지 사용량) : categoryRatioList
+		 */
+
+		// 총 사용량 비교 2번째 자리에서 반올림
+		Double totalRatio = Math.round((double)currentTotalPrice / aMonthAgoTotalPrice * 100 * 10) / 10.0;
+
+		List<CategoryRatio> categoryRatioList = new ArrayList<>();
+		// 이번달 지출 카테고리거 더 많은 경우
+		// 이번달 지출 카테고리를 하나씩 다 검사
+		if (currentCategorySumPrice.size() >= aMonthAgoCategorySumPrice.size()) {
+			for (CategorySum c : currentCategorySumPrice) {
+				// 이번달 지출한 카테고리를 저번달에도 지출했는지 검사
+				Optional<CategorySum> optionalCategorySum = aMonthAgoCategorySumPrice.stream()
+					.filter(aMonthAgoCategorySum -> c.getCategoryId().equals(aMonthAgoCategorySum.getCategoryId()))
+					.findFirst();
+
+				CategoryRatio categoryRatio;
+				// 지출 내역에 해당 카테고리가 있는 경우
+				if (optionalCategorySum.isPresent()) {
+					CategorySum categorySum = optionalCategorySum.get();
+					categoryRatio = CategoryRatio.builder()
+						.categoryId(categorySum.getCategoryId())
+						.categoryName(categorySum.getCategoryName())
+						.aMonthAgoSpending(categorySum.getSpending())  // 지난달 사용 금액
+						.todaySpending(c.getSpending())  // 오늘 사용금액
+						.compareRatio(Math.round(((double)c.getSpending() / categorySum.getSpending()) * 1000)
+							/ 10.0) // 비율 : 이번달 오늘 까지 사용액 / 저번달 오늘 날짜까지 사용액 2번째 자리에서 반올림
+						.build();
+				}
+				// 지출 내역에 해당 카테고리가 없는 경우
+				else {
+					categoryRatio = CategoryRatio.builder()
+						.categoryId(c.getCategoryId())
+						.categoryName(c.getCategoryName())
+						.aMonthAgoSpending(0)  // 지난달 사용액
+						.todaySpending(c.getSpending())  // 이번달 사용금액
+						.compareRatio(null) // 지난달 0원이기에 비율 계산 불가
+						.build();
+				}
+
+				categoryRatioList.add(categoryRatio);
+			}
+		}
+
+		// 저번달 지출 카테고리가 더 많은 경우
+		// 저번달 지출 카테고리를 하나씩 다 검사
+		else {
+			for (CategorySum c : aMonthAgoCategorySumPrice) {
+				// 이번달 지출한 카테고리를 저번달에도 지출했는지 검사
+				Optional<CategorySum> optionalCategorySum = currentCategorySumPrice.stream()
+					.filter(aMonthAgoCategorySum -> c.getCategoryId().equals(aMonthAgoCategorySum.getCategoryId()))
+					.findFirst();
+
+				CategoryRatio categoryRatio;
+				// 저번달 지출 내역에 이번달 카테고리가 있는 경우
+				if (optionalCategorySum.isPresent()) {
+					CategorySum categorySum = optionalCategorySum.get();
+					categoryRatio = CategoryRatio.builder()
+						.categoryId(categorySum.getCategoryId())
+						.categoryName(categorySum.getCategoryName())
+						.aMonthAgoSpending(categorySum.getSpending())  // 지난달 사용 금액
+						.todaySpending(c.getSpending())  // 오늘 사용금액
+						.compareRatio(Math.round(((double)c.getSpending() / categorySum.getSpending()) * 1000)
+							/ 10.0) // 비율 : 이번달 오늘 까지 사용액 / 저번달 오늘 날짜까지 사용액 2번째 자리에서 반올림
+						.build();
+				}
+				// 지출 내역에 해당 카테고리가 없는 경우
+				else {
+					categoryRatio = CategoryRatio.builder()
+						.categoryId(c.getCategoryId())
+						.categoryName(c.getCategoryName())
+						.aMonthAgoSpending(0)  // 지난달 사용액
+						.todaySpending(c.getSpending())  // 이번달 사용금액
+						.compareRatio(null) // 지난달 0원이기에 비율 계산 불가
+						.build();
+				}
+
+				categoryRatioList.add(categoryRatio);
+			}
+		}
+
+		AMothAgoRatioResult result = AMothAgoRatioResult.builder()
+			.currentTotal(currentTotalPrice)
+			.aMonthAgoTotal(aMonthAgoTotalPrice)
+			.totalRatio(totalRatio)
+			.categoryRatioList(categoryRatioList)
+			.build();
+
+		return RsData.of("S-1", "지난달 대비 오늘 일자 기준 사용량 통계 데이터 추출 성공", result);
 	}
 }

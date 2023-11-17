@@ -144,4 +144,12 @@ public class ApiV1ExpenditureController {
 		RsData rsToday = expenditureService.getToday(user.getUsername());
 		return rsToday;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping ("/statistics/lastmonth")
+	@Operation(summary = "지출 통계 기능 1 - 지난달 대비 총액, 카테고리별 소비율 API")
+	public RsData statisticLastMonth(@AuthenticationPrincipal User user) {
+		RsData rsLastMonth = expenditureService.getLastMonthStatisics(user.getUsername());
+		return rsLastMonth;
+	}
 }
