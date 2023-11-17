@@ -310,6 +310,37 @@ public class NotProd {
 
 			expenditureRepository.saveAll(cheorHyeonExpenditureList);
 
+			/*
+				지난주 소비 더미 데이터 생성
+				테스트에 사용하지 않는 새로운 유저 활용
+			 */
+
+			List<Expenditure> user3ExpenditureList = new ArrayList<>();
+
+			for(int i=0; i<10; i++) {
+				Expenditure user3PreWeekExpenditureTest = Expenditure.builder()
+					.member(user3)
+					.category(category1)
+					.memo("1주일 전 테스트 식비" + i)
+					.spendingPrice(10_000)
+					.spendDate(LocalDate.now().minusDays(7))
+					.build();
+
+				Expenditure user3TodayExpenditureTest = Expenditure.builder()
+					.member(user3)
+					.category(category1)
+					.memo("오늘 테스트 식비" + i)
+					.spendingPrice(20_000)
+					.spendDate(LocalDate.now())
+					.build();
+
+				user3ExpenditureList.add(user3PreWeekExpenditureTest);
+				user3ExpenditureList.add(user3TodayExpenditureTest);
+			}
+
+			expenditureRepository.saveAll(user3ExpenditureList);
+
+
 
 		};
 	}
