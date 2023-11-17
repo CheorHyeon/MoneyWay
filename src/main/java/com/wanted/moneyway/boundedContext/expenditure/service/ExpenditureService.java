@@ -13,6 +13,7 @@ import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
 import com.wanted.moneyway.boundedContext.expenditure.dto.AMothAgoRatioResult;
+import com.wanted.moneyway.boundedContext.expenditure.dto.AWeekAgoRatioRequest;
 import com.wanted.moneyway.boundedContext.expenditure.dto.BudgetCalculationResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategoryRatio;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
@@ -622,5 +623,46 @@ public class ExpenditureService {
 			.build();
 
 		return RsData.of("S-1", "지난달 대비 오늘 일자 기준 사용량 통계 데이터 추출 성공", result);
+	}
+
+	public RsData getLastWeekStatisics(String userName) {
+		Member member = memberService.get(userName);
+
+		// 오늘 날짜에서 7일 뺀 날짜 추출
+		LocalDate targetDate = LocalDate.now().minusDays(7);
+
+		// 한달전의 (1일~오늘 일자) 지출 추출용 DTO
+		SearchRequestDTO searchRequestDTO = SearchRequestDTO.builder()
+			.endDate(targetDate)
+			.startDate(targetDate)
+			.build();
+
+		// 7일전 지출 데이터
+		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			searchRequestDTO);
+
+		Integer aWeekAgoTotalPrice = totalAndCategorySum.getTotalSpending();
+
+		// 오늘 날짜
+		LocalDate today = LocalDate.now();
+
+		// 이번달 (1일 ~ 오늘 일자) 지출 -> 추출용 DTO 수정
+		searchRequestDTO = SearchRequestDTO.builder()
+			.startDate(today)
+			.endDate(today)
+			.build();
+
+		// 오늘 지출 추출
+		totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member, searchRequestDTO);
+		Integer todayTotalPrice = totalAndCategorySum.getTotalSpending();
+
+		AWeekAgoRatioRequest result = AWeekAgoRatioRequest.builder()
+			.todayTotal(todayTotalPrice)
+			.aWeekAgoTotal(aWeekAgoTotalPrice)
+			.totalRatio(Math.round(((double)todayTotalPrice / aWeekAgoTotalPrice) * 1000) / 10.0)
+			.build();
+
+		return RsData.of("S-1", "지난 요일과 총액 비교 성공", result);
+
 	}
 }

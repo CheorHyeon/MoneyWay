@@ -152,4 +152,12 @@ public class ApiV1ExpenditureController {
 		RsData rsLastMonth = expenditureService.getLastMonthStatisics(user.getUsername());
 		return rsLastMonth;
 	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping ("/statistics/lastweek")
+	@Operation(summary = "지출 통계 기능 2 - 7일전 지출 대비 지출 총액 비교 API")
+	public RsData statisticLastWeek(@AuthenticationPrincipal User user) {
+		RsData rsLastWeek = expenditureService.getLastWeekStatisics(user.getUsername());
+		return rsLastWeek;
+	}
 }
