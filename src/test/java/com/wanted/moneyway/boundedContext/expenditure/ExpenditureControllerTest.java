@@ -450,4 +450,33 @@ public class ExpenditureControllerTest {
 			.andExpect(jsonPath("$.data.totalRatio").value(200))
 			.andExpect(jsonPath("$.data.aweekAgoTotal").value(100000));
 	}
+
+	/*
+		사용자의 오늘 지출 총액을 다른 사람들의 지출의 평균값과 비교한 결과를 반환합니다.
+		- user1 : 20만원
+		- 다른 사용자 지출액 63만원 -> 평균 31만5천원
+ 	*/
+	@Test
+	@DisplayName("GET /api/v1/expenditure/statistics/otheruser 는 다른 사람들의 지출 평균과 나이 지출을 비교합니다.")
+	void t14() throws Exception {
+		// "user3"에 해당하는 사용자 정보를 로드하고 JWT 토큰 생성
+		Member member = memberService.get("user1");
+		token = jwtProvider.genToken(member.toClaims(), 60 * 60 * 24 * 1);
+		// When
+		ResultActions resultActions = mvc
+			.perform(
+				get("/api/v1/expenditure/statistics/otheruser")
+					.header("Authorization", "Bearer " + token) // 생성한 토큰을 헤더에 포함
+			)
+			.andDo(print());
+
+		// Then
+		resultActions
+			.andExpect(status().is2xxSuccessful())
+			.andExpect(jsonPath("$.resultCode").value("S-1"))
+			.andExpect(jsonPath("$.msg").value("다른 사람들 평균 지출 대비 나의 지출 비율 반환 성공"))
+			.andExpect(jsonPath("$.data.totalPrice").value(200000))
+			.andExpect(jsonPath("$.data.othersAverage").value(315000))
+			.andExpect(jsonPath("$.data.expenditureRatio").value( 63.5));
+	}
 }

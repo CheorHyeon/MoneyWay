@@ -19,6 +19,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndCategorySumDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndOthersAverage;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 
@@ -117,6 +118,47 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 			.collect(Collectors.toList());
 
 		return new TotalAndCategorySumDTO(totalSpending, categorySumList);
+	}
+
+	/*
+		주어진 기간에 사용자 지출 총액과 다른 사람들 지출 총액 평균을 반환하는 메서드
+	 */
+	@Override
+	public TotalAndOthersAverage getTotalAndOthersAverage(Member targetMember, SearchRequestDTO searchRequestDTO) {
+		// 대상 사용자 제외한 오늘 지출금액 총합
+		Integer othersSumPrice = jpaQueryFactory.select(expenditure.spendingPrice.sum())
+			.from(expenditure)
+			.where(expenditure.member.eq(targetMember).not(),
+				expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.isTotal.eq(true))
+			.fetchOne()
+			.intValue();
+
+		// 대상 사용자 제외한 오늘 지출 있는 회원 수
+		Integer othersCount = jpaQueryFactory.select(expenditure.member.countDistinct())
+			.from(expenditure)
+			.where(expenditure.member.eq(targetMember).not(),
+				expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.isTotal.eq(true))
+			.fetchOne()
+			.intValue();
+
+		// 다른 사람들 평균액
+		Integer othersAvg = othersSumPrice / othersCount;
+
+		// 대상 사용자의 오늘 지출 총액을 구하는 쿼리
+		Integer total = jpaQueryFactory
+			.select(expenditure.spendingPrice.sum())
+			.from(expenditure)
+			.where(expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.member.eq(targetMember),
+				expenditure.isTotal.eq(true))
+			.fetchOne();
+
+		return TotalAndOthersAverage.builder()
+			.othersAverage(othersAvg)
+			.totalPrice(total)
+			.build();
 	}
 
 	/*
