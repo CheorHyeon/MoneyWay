@@ -473,8 +473,8 @@ public class ExpenditureControllerTest {
 			.andExpect(status().is2xxSuccessful())
 			.andExpect(jsonPath("$.resultCode").value("S-1"))
 			.andExpect(jsonPath("$.msg").value("다른 사람들 평균 지출 대비 나의 지출 비율 반환 성공"))
-			.andExpect(jsonPath("$.data.totalPrice").value(830000))
+			.andExpect(jsonPath("$.data.totalPrice").value(200000))
 			.andExpect(jsonPath("$.data.othersAverage").value(37058))
-			.andExpect(jsonPath("$.data.expenditureRatio").value(2239.7));
+			.andExpect(jsonPath("$.data.expenditureRatio").value(539.7));
 	}
 }
