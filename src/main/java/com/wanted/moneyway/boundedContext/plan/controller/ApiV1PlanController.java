@@ -15,6 +15,7 @@ import com.wanted.moneyway.boundedContext.plan.dto.PlanDTO;
 import com.wanted.moneyway.boundedContext.plan.entity.Plan;
 import com.wanted.moneyway.boundedContext.plan.service.PlanService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +36,7 @@ public class ApiV1PlanController {
 
 	@PreAuthorize("isAuthenticated()")
 	@PostMapping("")
+	@Operation(summary = "예산 계획 생성 및 수정 API")
 	public RsData<List<Plan>> create(@RequestBody PlanDTO planDTO, @AuthenticationPrincipal User user) {
 		if (planDTO.checkAllZero())
 			return RsData.of("F-1", "예산 항목 하나라도 입력 해야 등록 가능합니다.");
@@ -51,6 +53,7 @@ public class ApiV1PlanController {
 
 	@PreAuthorize("isAuthenticated()")
 	@PostMapping("/recommend")
+	@Operation(summary = "총 예산을 받아 카테고리별 예산 추천 API")
 	public RsData<PlanDTO> recommend(@RequestBody TotalPriceDTO totalPriceDTO) {
 		if (totalPriceDTO.getTotalPrice() == null || totalPriceDTO.getTotalPrice().equals(0)) {
 			return RsData.of("F-1", "총 금액을 입력해주셔야 추천 가능합니다.");

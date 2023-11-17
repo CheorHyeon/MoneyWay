@@ -39,6 +39,7 @@ public class ApiV1MemberController {
 	}
 
 	@PostMapping("/signup")
+	@Operation(summary = "회원가입 API")
 	public RsData signup(@Valid @RequestBody SignupRequest signupRequest, BindingResult bindingResult) {
 		// 요청 객체에서 입력하지 않은 부분이 있다면 메세지를 담아서 RsData 객체 바로 리턴
 		if (bindingResult.hasErrors()) {
@@ -66,7 +67,7 @@ public class ApiV1MemberController {
 
 
 	@PostMapping("/login")
-	@Operation(summary = "JWT, RT 발급")
+	@Operation(summary = "JWT, RT 발급(로그인) API")
 	public RsData<TokenDTO> login(@Valid @RequestBody SignInRequest signInRequest, BindingResult bindingResult) {
 		// 요청 객체에서 입력하지 않은 부분이 있다면 메세지를 담아서 RsData 객체 바로 리턴
 		if (bindingResult.hasErrors()) {

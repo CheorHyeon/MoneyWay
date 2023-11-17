@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 
 @OpenAPIDefinition(
-        info = @Info(title = "moneyway",
+        info = @Info(title = "Money Way",
                 version = "v1")
 )
 @Configuration
