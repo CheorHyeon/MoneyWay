@@ -138,7 +138,8 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 		Integer total = jpaQueryFactory
 			.select(expenditure.spendingPrice.sum())
 			.from(expenditure)
-			.where(expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()))
+			.where(expenditure.spendDate.between(searchRequestDTO.getStartDate(), searchRequestDTO.getEndDate()),
+				expenditure.member.eq(targetMember))
 			.fetchOne();
 
 		return TotalAndOthersAverage.builder()
