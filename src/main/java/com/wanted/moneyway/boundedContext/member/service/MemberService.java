@@ -91,4 +91,11 @@ public class MemberService {
 	public Member get(String userName) {
 		return memberRepository.findByUserName(userName).get();
 	}
+
+	public Member createByClaims(Map<String, Object> claims) {
+		return Member.builder()
+			.id((long)(int)claims.get("id"))
+			.userName((String)claims.get("userName"))
+			.build();
+	}
 }

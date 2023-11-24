@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.wanted.moneyway.base.jwt.JwtProvider;
+import com.wanted.moneyway.base.redis.RedisService;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.service.MemberService;
 
@@ -28,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 	private final JwtProvider jwtProvider;
 	private final MemberService memberService;
+
+	private final RedisService redisService;
 
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -64,12 +67,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 		}
 		// RT 유효한지 검사
 		if (isTokenValid(refreshToken)) {
-			Member member = getMemberFromToken(refreshToken);
-			// 사용자 DB에 저장된 RT와 같다면
-			if (member.getRefreshToken().equals(refreshToken)) {
+			// 사용자 추출
+			Map<String, Object> claims = jwtProvider.getClaims(refreshToken);
+			long targetId = (long)(int)claims.get("id");
+			// 캐시된 RT를 가져옴 (사용자 id 넘겨서)
+			String refreshTokenByCache = redisService.getRefreshTokenByCached(targetId);
+			// 사용자에게 저장된 RT와 같다면(캐시된 RT와 같은지 비교)
+			if (refreshTokenByCache.equals(refreshToken)) {
+				// 토큰으로부터 추출한 데이터로 Member를 생성
+				Member member = memberService.createByClaims(claims);
+				// 1일짜리 AT 재발생해서 반환
 				Map<String, Object> newMemberClaims = member.toClaims();
 				String newAccessToken = jwtProvider.genToken(newMemberClaims, 60 * 60 * 24 * 1);
 				response.addHeader("Authorization", "Bearer " + newAccessToken);
+				// 인증 처리
 				forceAuthentication(member);
 			}
 			// 다르다면 변경된 RT이므로 재 로그인
@@ -87,7 +98,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 		Map<String, Object> claims = jwtProvider.getClaims(token);
 		long id = (int)claims.get("id");
 		Member member = memberService.get(id);
-		if(member == null)
+		if (member == null)
 			throw new AuthenticationException("존재하지 않는 사용자입니다.");
 		return member;
 	}
@@ -97,7 +108,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 	}
 
 	private void forceAuthentication(Member member) {
-		User user = new User(member.getUserName(), member.getPassword(), member.getGrantedAuthorities());
+		User user = new User(member.getUserName(), "", member.getGrantedAuthorities());
 		UsernamePasswordAuthenticationToken authentication =
 			UsernamePasswordAuthenticationToken.authenticated(
 				user,

@@ -2,6 +2,11 @@ spring:
   profiles:
     active: dev
     include: secret
+  cache:
+    type: redis
+  redis:
+    host: 127.0.0.1
+    port: 6379
   h2:
     console:
       enabled: false
