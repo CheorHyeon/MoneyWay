@@ -3,6 +3,8 @@ package com.wanted.moneyway.boundedContext.member.service;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +21,12 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional(readOnly = true)
 public class MemberService {
+	private final ApplicationContext applicationContext;
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
-
 	private final JwtProvider jwtProvider;
+	private MemberService memberService;
+
 	@Transactional
 	public RsData join(String account, String password) {
 		Optional<Member> opMember = memberRepository.findByUserName(account);
@@ -44,8 +48,8 @@ public class MemberService {
 	public RsData<TokenDTO> login(String name, String password) {
 		Optional<Member> _member = memberRepository.findByUserName(name);
 
-		if(_member == null)
-			return	RsData.of("F-1", "존재하지 않는 회원입니다.");
+		if (_member == null)
+			return RsData.of("F-1", "존재하지 않는 회원입니다.");
 
 		Member member = _member.get();
 
@@ -59,9 +63,24 @@ public class MemberService {
 
 		// 리프레시 토큰 갱신
 		member.updateRefreshToken(refreshToken);
+		_updateRefreshToken__Cached(member); // Redis 값 갱신
 
 		return RsData.of("S-1", "토큰 발급 성공", new TokenDTO(accessToken, refreshToken));
+	}
 
+	private String _updateRefreshToken__Cached(Member member) {
+		if (memberService == null) {
+			// 의존성 순환 참조 때문에 RedisService를 의존성 주입 불가
+			// 따라서 Context에 등록된 memberService 객체 가져와서 실행
+			memberService = applicationContext.getBean("memberService", MemberService.class);
+		}
+
+		return memberService.updateRefreshToken__Cached(member);
+	}
+
+	@CachePut(value = "Refresh", key = "#member.id")
+	public String updateRefreshToken__Cached(Member member) {
+		return member.getRefreshToken();
 	}
 
 	private String genRefreshToken(Member member) {
