@@ -94,12 +94,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	private Member getMemberFromToken(String token) throws AuthenticationException {
+	private Member getMemberFromToken(String token){
 		Map<String, Object> claims = jwtProvider.getClaims(token);
-		long id = (int)claims.get("id");
-		Member member = memberService.get(id);
-		if (member == null)
-			throw new AuthenticationException("존재하지 않는 사용자입니다.");
+		Member member = memberService.createByClaims(claims);
 		return member;
 	}
 
