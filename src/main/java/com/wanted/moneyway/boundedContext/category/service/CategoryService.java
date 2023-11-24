@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.wanted.moneyway.base.redis.RedisService;
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.repository.CategoryRepository;
@@ -15,9 +16,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CategoryService {
-	private final CategoryRepository categoryRepository;
+	private final RedisService redisService;
 	public RsData<List<Category>> getAll() {
-		List<Category> allCategories = categoryRepository.findAll();
+		// 캐시 활용
+		List<Category> allCategories = redisService.getAllCategoriesByCached();
 
 		if(allCategories.isEmpty()){
 			return RsData.of("F-1", "등록된 카테고리가 없습니다.");
@@ -27,6 +29,7 @@ public class CategoryService {
 	}
 
 	public Category get(Long categoryId) {
-		return categoryRepository.findById(categoryId).get();
+		// 캐시 활용
+		return redisService.getCategoryByCached(categoryId);
 	}
 }

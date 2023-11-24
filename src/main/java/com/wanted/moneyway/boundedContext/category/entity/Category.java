@@ -2,6 +2,8 @@ package com.wanted.moneyway.boundedContext.category.entity;
 
 import static jakarta.persistence.GenerationType.*;
 
+import java.io.Serializable;
+
 import com.querydsl.core.annotations.QueryEntity;
 
 import jakarta.persistence.Column;
@@ -19,7 +21,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @QueryEntity
-public class Category {
+public class Category implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	private Long id;
