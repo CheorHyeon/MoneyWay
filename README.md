@@ -69,7 +69,12 @@
   - UsernamePassword 인증 필터 전 JWT 인증 필터를 두어 JWT로 인증 처리 하기 위한 필터 도입
   - 회원가입 / 로그인 / Swagger 문서 관련 URI 접속 시 필터 적용되지 않도록 설정
   - 각각 상황에 맞는 예외 처리를 통해 왜 통과가 안 되었는지 사용자에게 알려줍니다.
-  - [상세 설명 및 코드 - PR 바로가기](https://github.com/CheorHyeon/MoneyWay/pull/6)
+  - [JWT 인증 필터 구현 상세 설명 및 코드 - PR 바로가기](https://github.com/CheorHyeon/MoneyWay/pull/6)
+
+ - 리팩토링 : Redis 도입
+   - 사용자 로그인 시 Refresh Token을 Redis에 갱신하여 Refresh Token 검증 시 Redis를 활용하도록 수정
+   - JWT AccessToken 인증 시 토큰에서 추출한 데이터로 Member 객체 생성하도록 수정
+   - [Redis 도입하여 Refresh Token 및 Category 캐시 저장 상세 설명 및 코드 - PR 바로가기](https://github.com/CheorHyeon/MoneyWay/pull/35)
 
 ### 필터 발생 예외 처리 및 카테고리 조회 기능 API
 
@@ -91,6 +96,11 @@
   - JWT 인증 필터를 거쳐 인증된 사용자는 카테고리 목록 조회가 가능합니다.
 
 **[카테고리 조회 및 필터 예외 처리 상세 설명 및 코드 - PR 바로가기](https://github.com/CheorHyeon/MoneyWay/pull/8)**
+
+- 리팩토링 : Redis 도입
+  - 변하지 않을 Category 데이터를 Redis 캐시를 구현하여 카테고리 목록 조회 API 호출 시 DB 조회하지 않도록 수정
+  - 예산 지출 등 카테고리 조회 시 DB 조회가 아닌 Redis를 활용하여 가져오도록 수정
+  - [Redis 도입하여 Refresh Token 및 Category 캐시 저장 상세 설명 및 코드 - PR 바로가기](https://github.com/CheorHyeon/MoneyWay/pull/35)
 
 ### 예산 설계 및 추천 기능
 
@@ -230,4 +240,10 @@
 
 ## 회고
 - 동적 쿼리 적용을 위해 Query DSL을 사용해 볼 수 있어 좋았다.
+  - [Query DSL 적용기](https://velog.io/@puar12/Query-DSL-%EC%A0%81%EC%9A%A9%EA%B8%B0)
 - JWT를 Refresh Token을 활용하여 구현해 볼 수 있어 좋았다.
+- Filter에서 발생하는 예외 처리를 구현해 볼 수 있어 좋았다.
+  - [필터에서 발생하는 Exception 처리 + JWT 인증 필터](https://velog.io/@puar12/Spring-Boot-%ED%95%84%ED%84%B0%EC%97%90%EC%84%9C-%EB%B0%9C%EC%83%9D%ED%95%98%EB%8A%94-Exception-%EC%B2%98%EB%A6%AC%ED%95%98%EA%B8%B0-JWT-%EC%9D%B8%EC%A6%9D-%ED%95%84%ED%84%B0)
+- Redis를 활용하여 캐시를 구현해볼 수 있어 좋았다.
+  - [Redis 적용기 - 1](https://velog.io/@puar12/Spring-Redis-%EC%A0%81%EC%9A%A9%EA%B8%B0-1)
+  - [Redis 적용기 - 2](https://velog.io/@puar12/Spring-Boot-Redis-%EC%A0%81%EC%9A%A9%EA%B8%B0-2-%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%A0%95%EC%9D%98-Class-List%EB%A1%9C-%EC%A0%80%EC%9E%A5-%EB%B0%8F-%ED%98%B8%EC%B6%9C)
