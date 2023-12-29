@@ -61,7 +61,7 @@ public class ExpenditureService {
 
 		Expenditure expenditure = Expenditure.builder()
 			.memo(expenditureDTO.getMemo())
-			.isTotal(expenditureDTO.getIsTotal())
+			.isTotal(expenditureDTO.getIsTotal() == null ? true : expenditureDTO.getIsTotal())
 			.spendDate(expenditureDTO.getSpendDate())
 			.category(category)
 			.spendingPrice(expenditureDTO.getSpendingPrice())
