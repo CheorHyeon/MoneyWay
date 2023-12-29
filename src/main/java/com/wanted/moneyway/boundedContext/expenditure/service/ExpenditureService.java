@@ -136,7 +136,7 @@ public class ExpenditureService {
 			return rsAllByMember;
 
 		List<Plan> data = rsAllByMember.getData();
-		// 지출 목표 총 사용 금액 추출
+		// 계획한 총 지출 목표 금액 추출
 		Integer totalPrice = data.stream()
 			.mapToInt(a -> a.getBudget())
 			.sum();
@@ -215,6 +215,7 @@ public class ExpenditureService {
 			4. 응원 메세지
 			   - Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
 			   - Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
+			   - Case 3 : 예산 초과가 없는 경우 "절약하는 하루 보내세요!" 출력
 	 */
 	public RsData recommendBudget(String userName) {
 		Member member = memberService.get(userName);
@@ -225,10 +226,6 @@ public class ExpenditureService {
 			return rsAllByMember;
 
 		List<Plan> data = rsAllByMember.getData();
-		// 지출 목표 총 사용 금액 추출
-		Integer totalPrice = data.stream()
-			.mapToInt(a -> a.getBudget())
-			.sum();
 
 		LocalDate today = LocalDate.now();
 
@@ -275,7 +272,7 @@ public class ExpenditureService {
 				}
 			}
 		}
-
+		// Case 3 : 예산 초과하지 않은 경우
 		if (message == null) {
 			message = "절약하는 하루 보내세요!";
 		}
