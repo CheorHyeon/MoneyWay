@@ -218,77 +218,57 @@ public class ExpenditureService {
 			   - Case 3 : 예산 초과가 없는 경우 "절약하는 하루 보내세요!" 출력
 	 */
 	public RsData recommendBudget(String userName) {
-		Member member = memberService.get(userName);
+		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 오늘 사용 예산 추천
+		RsData<BudgetCalculationResult> resultRsData = _recommendBudget(userName);
+		// 예산 지출 계획을 세우지 않았다면 실패 반환
+		if (resultRsData.isFail())
+			return resultRsData;
 
-		// 예산 계획 추출
-		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
-		if (rsAllByMember.isFail())
-			return rsAllByMember;
+		BudgetCalculationResult result = resultRsData.getData();
 
-		List<Plan> data = rsAllByMember.getData();
-
-		LocalDate today = LocalDate.now();
-
-		// 이번달 1일 추출
-		LocalDate startOfMonth = Ut.date.getStartOfMonth(today);
-
-		// 이번달 말일 추출
-		LocalDate endOfMonth = Ut.date.getEndOfMonth(today);
-
-		// 지출액 구할때 동적 쿼리 생성되지 않고 날짜만 적용되도록 설정용 DTO 객체 생성
-		// 1일 ~ 어제까지 날짜 사용한 데이터 추출
-		SearchRequestDTO searchRequestDTO = new SearchRequestDTO();
-		searchRequestDTO.setStartDate(startOfMonth);
-		searchRequestDTO.setEndDate(today.minusDays(1));
-
-		// 지출에서 이번달 지출액 구하기
-		// 어제 날짜까지 지출액 총합 / 카테고리별 금액이 나옴
-		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
-			searchRequestDTO);
-
-		// 말일까지 남은 일수 계산
-		int diffDays = Ut.date.getDaysBetweenDates(today, endOfMonth);
-
-		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 예산 추천
-		BudgetCalculationResult result = calculateBudget(data, totalAndCategorySum, diffDays);
-
-		// 예산 추천 결과 추출
+		// 1. 지출 목표량 남은 금액
 		Integer diffTotal = result.getDiffTotal();
-		List<CategorySum> diffCategorySumList = result.getDiffCategorySumList();
+		// 2. 오늘 사용할 총액
 		Integer todayTotal = result.getTodayTotal();
-
+		// 3. 각 카테고리별 추천액
+		List<CategorySum> recommendPriceEachCategory = result.getDiffCategorySumList();
 		// 4. 응원 메세지
-		String message = null;
-		// Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
-
-		if (diffTotal <= 0) {
-			message = "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!";
-		} else {
-			// Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
-			for (CategorySum c : diffCategorySumList) {
-				if (c.getSpending() <= 0) {
-					message = "일부 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!";
-					break;
-				}
-			}
-		}
-		// Case 3 : 예산 초과하지 않은 경우
-		if (message == null) {
-			message = "절약하는 하루 보내세요!";
-		}
+		String message = genFightingMessage(diffTotal, recommendPriceEachCategory);
 
 		RecommendDTO recommendDTO = RecommendDTO.builder()
-			.recommendPriceEachCategory(diffCategorySumList)
-			.message(message)
-			.todayTotalPrice(todayTotal)
 			.totalRemainingPrice(diffTotal)
+			.todayTotalPrice(todayTotal)
+			.recommendPriceEachCategory(recommendPriceEachCategory)
+			.message(message)
 			.build();
 
 		return RsData.of("S-1", "금일 지출액 추천 성공", recommendDTO);
 	}
 
+	/*
+		응원 메세지 생성 메서드
+		 - Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
+		 - Case 2 : 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
+		 - Case 3 : 예산 초과가 없는 경우 "절약하는 하루 보내세요!" 출력
+	 */
+	private String genFightingMessage(Integer budget, List<CategorySum> recommendPriceEachCategory) {
+		// Case 1 : 지출 목표량 남은 금액 자체가 초과한 경우 0원으로 반환하고 메세지로 "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!" 출력
+		if (budget <= 0) {
+			return "목표한 예산을 초과하였으니 최대한 절약하며 하루를 보내봅시다!";
+		}
+
+		// Case 2 각 카테고리별 추천액 중 초과한 예산이 있을 경우 "해당 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를 보내봅시다!" 출력
+		// anyMatch : 주어진 조건을 만족하는 요소를 하나라도 만족하는지 검사 (0원 이하인 카테고리가 하나라도 있는지 검사)
+		if (recommendPriceEachCategory.stream().anyMatch(categorySum -> categorySum.getSpending() <= 0)) {
+			return "일부 카테고리 분야의 사용할 수 있는 예산이 없네요. 금일 사용할 총액 이내에서 충당해도 좋으니 절약하는 하루를내봅시다!";
+		}
+		// Case 3 : 예산 초과하지 않은 경우
+		return "절약하는 하루 보내세요!";
+	}
+
 	// 예산 계획과 현재까지 지출액을 받아 추천 예산을 계산
-	private BudgetCalculationResult calculateBudget(List<Plan> plans, TotalAndCategorySumDTO totalAndCategorySum,
+	private RsData<BudgetCalculationResult> calculateBudget(List<Plan> plans,
+		TotalAndCategorySumDTO totalAndCategorySum,
 		int remainingDays) {
 		// 카테고리별 합계 금액
 		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
@@ -336,7 +316,8 @@ public class ExpenditureService {
 			diffCategorySumList.add(diffCategorySum);
 		}
 
-		return new BudgetCalculationResult(diffTotal, todayTotal, diffCategorySumList);
+		return RsData.of("S-1", "예산 계획과 현재까지 지출액을 받아 추천 예산을 계산 성공",
+			new BudgetCalculationResult(diffTotal, todayTotal, diffCategorySumList));
 	}
 
 	@Transactional
@@ -376,17 +357,103 @@ public class ExpenditureService {
 	 */
 	public RsData getToday(String userName) {
 		Member member = memberService.get(userName);
+		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 오늘 사용 예산 추천
+		RsData<BudgetCalculationResult> resultRsData = _recommendBudget(userName);
+		// 예산 지출 계획을 세우지 않았다면 실패 반환
+		if (resultRsData.isFail())
+			return resultRsData;
+
+		BudgetCalculationResult result = resultRsData.getData();
+
+		// 오늘 사용한 금액을 구하기 위한 DTO 객체 생성
+		SearchRequestDTO todaySearchRequestDTO = SearchRequestDTO
+			.builder()
+			.startDate(LocalDate.now())
+			.endDate(LocalDate.now())
+			.build();
+
+		// 오늘 사용한 총액과 카테고리별 금액
+		TotalAndCategorySumDTO todayTotalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
+			todaySearchRequestDTO);
+
+		// 각 카테고리별 오늘 지출 추천액
+		List<CategorySum> recommendPriceEachCategory = result.getDiffCategorySumList();
+		// 각 카테고리별 오늘 실제 지출액
+		List<CategorySum> todayPriceEachCategory = todayTotalAndCategorySum.getCategorySumList();
+
+		// 반환 형태
+		// 1. 오늘 추천 총액 :  recommendTodayTotalPrice
+		Integer recommendTodayTotalPrice = result.getTodayTotal(); // 오늘 사용 가능한 총액 추천
+		// 2. 실제 사용한 오늘 총액 : todayTotalPrice
+		Integer todayTotalPrice = todayTotalAndCategorySum.getTotalSpending(); // 오늘 사용한 총액
+		// 3. 각 카테고리별 실제 사용금액 및 위험도 : todayResultWithDangerList
+		List<CategorySumWithDanger> todayResultWithDangerList = expenditureAndDangerList(recommendPriceEachCategory, todayPriceEachCategory);
+
+		// DTO 객체
+		TodayDTO todayDTO = TodayDTO.builder()
+			.recommendTodayTotalPrice(recommendTodayTotalPrice)
+			.todayTotalPrice(todayTotalPrice)
+			.categorySumWithDanger(todayResultWithDangerList)
+			.build();
+
+		return RsData.of("S-1", "오늘 지출 내역과 위험도 반환 성공", todayDTO);
+	}
+
+	/*
+		오늘 각 카테고리별 추천액과 지출액을 받아서 위험도를 계산하여 반환하는 메서드
+	 */
+	private List<CategorySumWithDanger> expenditureAndDangerList(List<CategorySum> recommendPriceEachCategory, List<CategorySum> todayPriceEachCategory) {
+		List<CategorySumWithDanger> result = new ArrayList<>();
+		for (CategorySum c : recommendPriceEachCategory) {
+			// 오늘 추천한 카테고리를 지출했는지 검사
+			Optional<CategorySum> optionalCategorySum = todayPriceEachCategory.stream()
+				.filter(categorySum -> c.getCategoryId().equals(categorySum.getCategoryId()))
+				.findFirst();
+
+			CategorySumWithDanger categorySumWithDanger;
+			// 지출 내역에 해당 카테고리가 있는 경우
+			if (optionalCategorySum.isPresent()) {
+				CategorySum categorySum = optionalCategorySum.get();
+				categorySumWithDanger = CategorySumWithDanger.builder()
+					.categoryId(categorySum.getCategoryId())
+					.categoryName(categorySum.getCategoryName())
+					.recommendTodaySpending(c.getSpending())  // 추천 금액
+					.todaySpending(categorySum.getSpending())  // 실제 사용금액
+					.danger(Math.round(((double)categorySum.getSpending() / c.getSpending()) * 1000)
+						/ 10.0) // 위험도 : 사용액 / 추천액 2번째 자리에서 반올림
+					.build();
+			}
+			// 지출 내역에 해당 카테고리가 없는 경우
+			else {
+				categorySumWithDanger = CategorySumWithDanger.builder()
+					.categoryId(c.getCategoryId())
+					.categoryName(c.getCategoryName())
+					.recommendTodaySpending(c.getSpending())  // 추천 금액
+					.todaySpending(0)  // 실제 사용금액
+					.danger(0.0) // 사용액이 없으니 0
+					.build();
+			}
+
+			result.add(categorySumWithDanger);
+		}
+
+		return result;
+	}
+
+	/*
+		오늘 사용 예산 추천 메서드 공통 로직 메서드화
+		- 오늘 지출 내역과 각 카테고리별 지출 위험도 안내 기능
+		- 오늘 지출 추천
+	 */
+	private RsData<BudgetCalculationResult> _recommendBudget(String userName) {
+		Member member = memberService.get(userName);
 
 		// 예산 계획 추출
 		RsData<List<Plan>> rsAllByMember = planService.getAllByMember(member);
 		if (rsAllByMember.isFail())
-			return rsAllByMember;
+			return (RsData)rsAllByMember;
 
 		List<Plan> data = rsAllByMember.getData();
-		// 지출 목표 총 사용 금액 추출
-		Integer totalPrice = data.stream()
-			.mapToInt(a -> a.getBudget())
-			.sum();
 
 		LocalDate today = LocalDate.now();
 
@@ -417,70 +484,7 @@ public class ExpenditureService {
 		int diffDays = Ut.date.getDaysBetweenDates(today, endOfMonth);
 
 		// 예산 계획, 어제까지 지출액, 말일까지 남은 일 수로 예산 추천
-		BudgetCalculationResult result = calculateBudget(data, totalBeforeDayAndCategorySum, diffDays);
-
-		// 예산 추천 결과 추출
-		Integer diffTotal = result.getDiffTotal(); // 전체 남은액
-		List<CategorySum> diffCategorySumList = result.getDiffCategorySumList(); // 각 카테고리별 추천액
-		Integer recommendTodayTotalPrice = result.getTodayTotal(); // 오늘 사용 가능한 총액 추천
-
-		// 오늘 사용한 총액과 카테고리별 금액
-		TotalAndCategorySumDTO todayTotalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
-			todaySearchRequestDTO);
-
-		// 결과용
-		Integer todayTotalPrice = todayTotalAndCategorySum.getTotalSpending(); // 오늘 사용한 총액
-		List<CategorySum> todayPriceEachCategory = todayTotalAndCategorySum.getCategorySumList();
-
-		// 각각 실제 금액과 위험도 계산
-		// 반환 형태
-		// 1. 오늘 추천 총액 :  recommendTodayTotalPrice
-		// 2. 실제 사용한 오늘 총액 : todayTotalPrice
-		// 3. 각 카테고리별 실제 사용금액 및 위험도 : 구해야 함
-
-		List<CategorySumWithDanger> todayResultWithDangerList = new ArrayList<>();
-
-		for (CategorySum c : diffCategorySumList) {
-			// 오늘 추천한 카테고리를 지출했는지 검사
-			Optional<CategorySum> optionalCategorySum = todayPriceEachCategory.stream()
-				.filter(categorySum -> c.getCategoryId().equals(categorySum.getCategoryId()))
-				.findFirst();
-
-			CategorySumWithDanger categorySumWithDanger;
-			// 지출 내역에 해당 카테고리가 있는 경우
-			if (optionalCategorySum.isPresent()) {
-				CategorySum categorySum = optionalCategorySum.get();
-				categorySumWithDanger = CategorySumWithDanger.builder()
-					.categoryId(categorySum.getCategoryId())
-					.categoryName(categorySum.getCategoryName())
-					.recommendTodaySpending(c.getSpending())  // 추천 금액
-					.todaySpending(categorySum.getSpending())  // 실제 사용금액
-					.danger(Math.round(((double)categorySum.getSpending() / c.getSpending()) * 1000)
-						/ 10.0) // 위험도 : 사용액 / 추천액 2번째 자리에서 반올림
-					.build();
-			}
-			// 지출 내역에 해당 카테고리가 없는 경우
-			else {
-				categorySumWithDanger = CategorySumWithDanger.builder()
-					.categoryId(c.getCategoryId())
-					.categoryName(c.getCategoryName())
-					.recommendTodaySpending(c.getSpending())  // 추천 금액
-					.todaySpending(0)  // 실제 사용금액
-					.danger(0.0) // 사용액이 없으니 0
-					.build();
-			}
-
-			todayResultWithDangerList.add(categorySumWithDanger);
-		}
-
-		// DTO 객체
-		TodayDTO todayDTO = TodayDTO.builder()
-			.recommendTodayTotalPrice(recommendTodayTotalPrice)
-			.todayTotalPrice(todayTotalPrice)
-			.categorySumWithDanger(todayResultWithDangerList)
-			.build();
-
-		return RsData.of("S-1", "오늘 지출 내역과 위험도 반환 성공", todayDTO);
+		return calculateBudget(data, totalBeforeDayAndCategorySum, diffDays);
 	}
 
 	/*
