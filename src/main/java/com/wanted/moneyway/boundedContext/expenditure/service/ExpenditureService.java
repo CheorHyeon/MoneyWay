@@ -652,6 +652,12 @@ public class ExpenditureService {
 		return RsData.of("S-1", "지난 요일과 총액 비교 성공", result);
 	}
 
+	/*
+		다른 사람 오늘 지출액 대비 나의 지출액 비율 추출 메서드
+		- 나의 오늘 지출액
+		- 다른 사람들의 오늘 지출액 평균
+		- 다른 사람들 지출액 대비 나의 지출액 비율 추출
+	 */
 	public RsData getOtherUserStatisics(String userName) {
 		Member member = memberService.get(userName);
 
@@ -672,8 +678,8 @@ public class ExpenditureService {
 
 		UserExpenditureComparisonDTO result = UserExpenditureComparisonDTO
 			.builder()
-			.othersAverage(otherTotalAvg)
 			.totalPrice(userTotal)
+			.othersAverage(otherTotalAvg)
 			// 비율 : 나의 지출액 / 다른 사람들 평균 지출액 2번째 자리에서 반올림
 			.expenditureRatio((Math.round(((double)userTotal / otherTotalAvg) * 1000) / 10.0))
 			.build();
