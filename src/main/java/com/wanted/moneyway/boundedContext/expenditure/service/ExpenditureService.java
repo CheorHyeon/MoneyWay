@@ -618,7 +618,7 @@ public class ExpenditureService {
 		// 오늘 날짜에서 7일 뺀 날짜 추출
 		LocalDate targetDate = LocalDate.now().minusDays(7);
 
-		// 한달전의 (1일~오늘 일자) 지출 추출용 DTO
+		// 1주일 전 지출 추출용 DTO
 		SearchRequestDTO searchRequestDTO = SearchRequestDTO.builder()
 			.endDate(targetDate)
 			.startDate(targetDate)
@@ -633,7 +633,7 @@ public class ExpenditureService {
 		// 오늘 날짜
 		LocalDate today = LocalDate.now();
 
-		// 이번달 (1일 ~ 오늘 일자) 지출 -> 추출용 DTO 수정
+		// 오늘 지출 추출용 DTO 수정
 		searchRequestDTO = SearchRequestDTO.builder()
 			.startDate(today)
 			.endDate(today)
@@ -650,7 +650,6 @@ public class ExpenditureService {
 			.build();
 
 		return RsData.of("S-1", "지난 요일과 총액 비교 성공", result);
-
 	}
 
 	public RsData getOtherUserStatisics(String userName) {
