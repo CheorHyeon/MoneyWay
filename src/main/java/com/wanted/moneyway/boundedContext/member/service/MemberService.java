@@ -3,8 +3,10 @@ package com.wanted.moneyway.boundedContext.member.service;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ public class MemberService {
 	private final PasswordEncoder passwordEncoder;
 	private final JwtProvider jwtProvider;
 	private MemberService memberService;
+
+	private final RedisTemplate redisTemplate;
 
 	@Transactional
 	public RsData join(String account, String password) {
@@ -81,6 +85,29 @@ public class MemberService {
 	@CachePut(value = "Refresh", key = "#member.id")
 	public String updateRefreshToken__Cached(Member member) {
 		return member.getRefreshToken();
+	}
+
+	@CacheEvict(value = "Refresh", key = "#memberId", beforeInvocation = false)
+	@Transactional
+	public RsData deleteRefreshToken(Long memberId) {
+		// 1. beforeInvocation 옵션으로 호출 자체로 Redis 캐시 삭제 지만 미리 지워버리면 입구컷 불가
+		// @CacheEvict : 캐시에 값이 업성도 메서드 호출하기에 사전 입구컷 필요
+		if (!isRefreshTokenExists(memberId)) {
+			return RsData.of("S-1", "사용자 Id : " + memberId + "의 Refresh Token이 이미 초기화 되었습니다. 재로그인 해주세요", null);
+		}
+
+		Member member = memberRepository.findById(memberId).orElse(null);
+		if(member == null) {
+			return RsData.of("F-1", "사용자 Id : " + memberId + " 는 존재하지 않는 회원입니다.");
+		}
+		// 2. DB 초기화
+		member.resetRefreshToken();
+		return RsData.of("S-1", "사용자 Id : " + member.getUserName() + "의 Refresh Token 초기화 성공 재로그인 해주세요", null);
+	}
+
+	// 캐시에서 Refresh Token 존재 여부 확인
+	private boolean isRefreshTokenExists(Long memberId) {
+		return redisTemplate.hasKey("Refresh::" + memberId);
 	}
 
 	private String genRefreshToken(Member member) {

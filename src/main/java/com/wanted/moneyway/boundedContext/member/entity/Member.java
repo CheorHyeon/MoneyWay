@@ -60,4 +60,8 @@ public class Member {
 		result.put("userName", getUserName());
 		return result;
 	}
+
+	public void resetRefreshToken() {
+		this.refreshToken = null;
+	}
 }
