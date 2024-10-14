@@ -60,15 +60,16 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 			.fetch();
 
 		// 전체 데이터 개수 추출
-		long total = jpaQueryFactory.selectFrom(expenditure)
+		Long total = jpaQueryFactory.select(expenditure.count())
+			.from(expenditure)
 			.where(
 				expenditure.member.eq(member),
 				expenditure.spendDate.between(startDate, endDate),
 				builder // 조건 동적 추가
 			)
-			.fetchCount();
+			.fetchOne();
 
-		return new PageImpl<>(expenditures, pageable, total);
+		return new PageImpl<>(expenditures, pageable, total != null ? total : 0L);
 	}
 
 	/*
