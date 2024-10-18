@@ -58,18 +58,18 @@ public class ExpenditureService {
 	public RsData<Expenditure> create(ExpenditureDTO expenditureDTO, String username) {
 		Member member = memberService.get(username);
 
-		Category category = categoryService.get(expenditureDTO.getCategoryId());
+		Category category = categoryService.get(expenditureDTO.categoryId());
 
 		if (category == null) {
 			return RsData.of("F-1", "해당 카테고리는 존재하지 않습니다.");
 		}
 
 		Expenditure expenditure = Expenditure.builder()
-			.memo(expenditureDTO.getMemo())
-			.isTotal(expenditureDTO.getIsTotal() == null ? true : expenditureDTO.getIsTotal())
-			.spendDate(expenditureDTO.getSpendDate())
+			.memo(expenditureDTO.memo())
+			.isTotal(expenditureDTO.isTotal() == null ? true : expenditureDTO.isTotal())
+			.spendDate(expenditureDTO.spendDate())
 			.category(category)
-			.spendingPrice(expenditureDTO.getSpendingPrice())
+			.spendingPrice(expenditureDTO.spendingPrice())
 			.member(member)
 			.build();
 
@@ -115,12 +115,11 @@ public class ExpenditureService {
 	public RsData search(String userName, SearchRequestDTO searchRequestDTO) {
 		Member member = memberService.get(userName);
 
-		Page<Expenditure> expenditurePage = expenditureRepository.searchExpenditure(member, searchRequestDTO);
+		Page<ExpenditureDTO> expenditurePage = expenditureRepository.searchExpenditure(member, searchRequestDTO);
 		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
 			searchRequestDTO);
 
-		SearchResult searchResult = new SearchResult(totalAndCategorySum.getTotalSpending(),
-			totalAndCategorySum.getCategorySumList(), expenditurePage);
+		SearchResult searchResult = SearchResult.of(totalAndCategorySum, expenditurePage);
 
 		return RsData.of("S-1", "조회 성공", searchResult);
 	}
@@ -163,11 +162,11 @@ public class ExpenditureService {
 		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
 			searchRequestDTO);
 
-		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
+		List<CategorySum> categorySumList = totalAndCategorySum.categorySumList();
 		List<CategorySum> diffCategorySumList = new ArrayList<>();
 
 		// 실제 지출액 총 금액
-		Integer expenditureTotal = totalAndCategorySum.getTotalSpending();
+		Integer expenditureTotal = totalAndCategorySum.totalSpending();
 
 		// 3-1. 목표액 - 실제 지출액 (남은 총 금액)
 		Integer diffTotal = totalPrice - expenditureTotal;
@@ -276,11 +275,11 @@ public class ExpenditureService {
 		TotalAndCategorySumDTO totalAndCategorySum,
 		int remainingDays) {
 		// 카테고리별 합계 금액
-		List<CategorySum> categorySumList = totalAndCategorySum.getCategorySumList();
+		List<CategorySum> categorySumList = totalAndCategorySum.categorySumList();
 		List<CategorySum> diffCategorySumList = new ArrayList<>();
 
 		// 실제 지출액 총 금액
-		Integer expenditureTotal = totalAndCategorySum.getTotalSpending();
+		Integer expenditureTotal = totalAndCategorySum.totalSpending();
 
 		// 지출 목표 총 사용 금액 추출
 		Integer totalPrice = plans.stream()
@@ -338,19 +337,20 @@ public class ExpenditureService {
 			return RsData.of("F-1", "지출 내역 작성자만 수정 가능합니다.");
 
 		Expenditure modifyExpenditure = expenditure.toBuilder()
-			.category(expenditureDTO.getCategoryId() == null ? expenditure.getCategory() :
-				categoryService.get(expenditureDTO.getCategoryId()))
-			.isTotal(expenditureDTO.getIsTotal() == null ? expenditure.getIsTotal() : expenditureDTO.getIsTotal())
+			.category(expenditureDTO.categoryId() == null ? expenditure.getCategory() :
+				categoryService.get(expenditureDTO.categoryId()))
+			.isTotal(expenditureDTO.isTotal() == null ? expenditure.getIsTotal() : expenditureDTO.isTotal())
 			.spendDate(
-				expenditureDTO.getSpendDate() == null ? expenditure.getSpendDate() : expenditureDTO.getSpendDate())
-			.memo(expenditureDTO.getMemo() == null ? expenditure.getMemo() : expenditureDTO.getMemo())
-			.spendingPrice(expenditureDTO.getSpendingPrice() == null ? expenditure.getSpendingPrice() :
-				expenditureDTO.getSpendingPrice())
+				expenditureDTO.spendDate() == null ? expenditure.getSpendDate() : expenditureDTO.spendDate())
+			.memo(expenditureDTO.memo() == null ? expenditure.getMemo() : expenditureDTO.memo())
+			.spendingPrice(expenditureDTO.spendingPrice() == null ? expenditure.getSpendingPrice() :
+				expenditureDTO.spendingPrice())
 			.build();
 
 		expenditureRepository.save(modifyExpenditure);
 
-		return RsData.of("S-1", "지출 내역 변경 성공", modifyExpenditure);
+		// 변경 사항 DTO에 담아서 반환
+		return RsData.of("S-1", "지출 내역 변경 성공", ExpenditureDTO.of(modifyExpenditure));
 	}
 
 	/*
@@ -384,13 +384,13 @@ public class ExpenditureService {
 		// 각 카테고리별 오늘 지출 추천액
 		List<CategorySum> recommendPriceEachCategory = result.getDiffCategorySumList();
 		// 각 카테고리별 오늘 실제 지출액
-		List<CategorySum> todayPriceEachCategory = todayTotalAndCategorySum.getCategorySumList();
+		List<CategorySum> todayPriceEachCategory = todayTotalAndCategorySum.categorySumList();
 
 		// 반환 형태
 		// 1. 오늘 추천 총액 :  recommendTodayTotalPrice
 		Integer recommendTodayTotalPrice = result.getTodayTotal(); // 오늘 사용 가능한 총액 추천
 		// 2. 실제 사용한 오늘 총액 : todayTotalPrice
-		Integer todayTotalPrice = todayTotalAndCategorySum.getTotalSpending(); // 오늘 사용한 총액
+		Integer todayTotalPrice = todayTotalAndCategorySum.totalSpending(); // 오늘 사용한 총액
 		// 3. 각 카테고리별 실제 사용금액 및 위험도 : todayResultWithDangerList
 		List<CategorySumWithDanger> todayResultWithDangerList = expenditureAndDangerList(recommendPriceEachCategory,
 			todayPriceEachCategory);
@@ -517,8 +517,8 @@ public class ExpenditureService {
 		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
 			searchRequestDTO);
 
-		Integer aMonthAgoTotalPrice = totalAndCategorySum.getTotalSpending();
-		List<CategorySum> aMonthAgoCategorySumPrice = totalAndCategorySum.getCategorySumList();
+		Integer aMonthAgoTotalPrice = totalAndCategorySum.totalSpending();
+		List<CategorySum> aMonthAgoCategorySumPrice = totalAndCategorySum.categorySumList();
 
 		// 오늘 날짜
 		LocalDate today = LocalDate.now();
@@ -535,8 +535,8 @@ public class ExpenditureService {
 		// 이번달 지출 추출
 		totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member, searchRequestDTO);
 
-		Integer currentTotalPrice = totalAndCategorySum.getTotalSpending();
-		List<CategorySum> currentCategorySumPrice = totalAndCategorySum.getCategorySumList();
+		Integer currentTotalPrice = totalAndCategorySum.totalSpending();
+		List<CategorySum> currentCategorySumPrice = totalAndCategorySum.categorySumList();
 
 		/*
 			결과 반환용 Data
@@ -628,7 +628,7 @@ public class ExpenditureService {
 		TotalAndCategorySumDTO totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member,
 			searchRequestDTO);
 
-		Integer aWeekAgoTotalPrice = totalAndCategorySum.getTotalSpending();
+		Integer aWeekAgoTotalPrice = totalAndCategorySum.totalSpending();
 
 		// 오늘 날짜
 		LocalDate today = LocalDate.now();
@@ -641,7 +641,7 @@ public class ExpenditureService {
 
 		// 오늘 지출 추출
 		totalAndCategorySum = expenditureRepository.getTotalAndCategorySum(member, searchRequestDTO);
-		Integer todayTotalPrice = totalAndCategorySum.getTotalSpending();
+		Integer todayTotalPrice = totalAndCategorySum.totalSpending();
 
 		AWeekAgoRatioRequest result = AWeekAgoRatioRequest.builder()
 			.todayTotal(todayTotalPrice)

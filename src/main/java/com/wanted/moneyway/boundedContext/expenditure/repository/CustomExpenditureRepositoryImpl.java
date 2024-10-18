@@ -10,17 +10,21 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySum;
+import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndCategorySumDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TotalAndOthersAverage;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
+import com.wanted.moneyway.boundedContext.expenditure.entity.QExpenditure;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +37,7 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 		페이지별 지출 데이터 조회
 	 */
 	@Override
-	public Page<Expenditure> searchExpenditure(Member member, SearchRequestDTO searchRequestDTO) {
+	public Page<ExpenditureDTO> searchExpenditure(Member member, SearchRequestDTO searchRequestDTO) {
 		LocalDate startDate = searchRequestDTO.getStartDate();
 		LocalDate endDate = searchRequestDTO.getEndDate();
 		Long categoryId = searchRequestDTO.getCategoryId();
@@ -49,7 +53,18 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 		BooleanBuilder builder = createBooleanBuilder(categoryId, minPrice, maxPrice);
 
 		// 조건에 맞는 목록 구하기
-		List<Expenditure> expenditures = jpaQueryFactory.selectFrom(expenditure)
+		List<ExpenditureDTO> expenditures = jpaQueryFactory.select(
+				Projections.constructor(ExpenditureDTO.class,
+					expenditure.id.as("expenditureId"),
+					expenditure.category.id.as("categoryId"),
+					expenditure.spendingPrice,
+					expenditure.memo,
+					expenditure.spendDate,
+					expenditure.isTotal
+				)
+			)
+			.from(expenditure)
+			.join(expenditure.category, category) // inner join 생략 가능
 			.where(
 				expenditure.member.eq(member),
 				expenditure.spendDate.between(startDate, endDate),
@@ -60,16 +75,15 @@ public class CustomExpenditureRepositoryImpl implements CustomExpenditureReposit
 			.fetch();
 
 		// 전체 데이터 개수 추출
-		Long total = jpaQueryFactory.select(expenditure.count())
+		JPAQuery<Long> total = jpaQueryFactory.select(expenditure.count())
 			.from(expenditure)
 			.where(
 				expenditure.member.eq(member),
 				expenditure.spendDate.between(startDate, endDate),
 				builder // 조건 동적 추가
-			)
-			.fetchOne();
+			);
 
-		return new PageImpl<>(expenditures, pageable, total != null ? total : 0L);
+		return PageableExecutionUtils.getPage(expenditures, pageable, total::fetchOne);
 	}
 
 	/*

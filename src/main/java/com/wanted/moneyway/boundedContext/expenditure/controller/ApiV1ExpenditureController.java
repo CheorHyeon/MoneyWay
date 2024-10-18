@@ -83,7 +83,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping("")
+	@GetMapping
 	@Operation(summary = "지출 내역 목록 조회")
 	public RsData<SearchResult> search(
 		@RequestParam(required = false, defaultValue = "#{T(java.time.LocalDate).now().minusDays(7)}") LocalDate startDate,
@@ -106,7 +106,6 @@ public class ApiV1ExpenditureController {
 			.pageNumber(pageNumber)
 			.build();
 
-		System.out.println(searchRequestDTO);
 		RsData<SearchResult> rsSearch = expenditureService.search(user.getUsername(), searchRequestDTO);
 		return rsSearch;
 	}

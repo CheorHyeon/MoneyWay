@@ -14,27 +14,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ExpenditureDTO {
+public record ExpenditureDTO (
 	@Schema(description = "지출내역 id, 응답용 필드", accessMode = Schema.AccessMode.READ_ONLY)
-	private Long expenditureId;
+	Long expenditureId,
 	@NotNull(message = "카테고리 Id를 입력해주세요")
 	@Schema(description = "카테고리 Id 입력", example = "1")
-	private Long categoryId;
+	Long categoryId,
 	@NotNull(message = "소비 금액을 입력해주세요.")
 	@Schema(description = "소비 금액, 천단위 구분기호 없이", example = "10000")
-	private Integer spendingPrice;
+	Integer spendingPrice,
 	@Schema(description = "비고란", example = "식당 내기 짐")
-	private String memo;
+	String memo,
 	@NotNull(message = "지출 일자를 입력해주세요")
 	@Schema(description = "지출 일자 형식")
-	private LocalDate spendDate;
+	LocalDate spendDate,
 	@Schema(description = "지출 합계에 포함 시킬지 여부(기본값 true)", example = "true(기본값) / false")
-	private Boolean isTotal;
-
+	Boolean isTotal){
 	public static ExpenditureDTO of(Expenditure expenditure) {
 		return ExpenditureDTO.builder()
 			.expenditureId(expenditure.getId())

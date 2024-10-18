@@ -4,17 +4,19 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
-import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
+import lombok.Builder;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SearchResult {
-	private Integer totalSpending;
-	private List<CategorySum> spendingByCategory;
-	private Page<Expenditure> expenditures;
+@Builder
+public record SearchResult(
+	Integer totalSpending,
+	List<CategorySum> spendingByCategory,
+	Page<ExpenditureDTO> expenditures
+) {
+	public static SearchResult of(TotalAndCategorySumDTO totalAndCategorySum, Page<ExpenditureDTO> expenditurePage) {
+		return SearchResult.builder()
+			.totalSpending(totalAndCategorySum.totalSpending())
+			.spendingByCategory(totalAndCategorySum.categorySumList())
+			.expenditures(expenditurePage)
+			.build();
+	}
 }
