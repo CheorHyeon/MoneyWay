@@ -1,21 +1,18 @@
 package com.wanted.moneyway.boundedContext.expenditure.dto;
 
-import static java.lang.Boolean.*;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Builder
-public record ExpenditureDTO (
+public record ExpenditureDTO(
 	@Schema(description = "지출내역 id, 응답용 필드", accessMode = Schema.AccessMode.READ_ONLY)
 	Long expenditureId,
 	@NotNull(message = "카테고리 Id를 입력해주세요")
@@ -29,8 +26,11 @@ public record ExpenditureDTO (
 	@NotNull(message = "지출 일자를 입력해주세요")
 	@Schema(description = "지출 일자 형식")
 	LocalDate spendDate,
+	@Schema(description = "지출 시간, 형식 : HH:mm", example = "16:30")
+	@DateTimeFormat(pattern = "HH:mm")
+	LocalTime spendTime,
 	@Schema(description = "지출 합계에 포함 시킬지 여부(기본값 true)", example = "true(기본값) / false")
-	Boolean isTotal){
+	Boolean isTotal) {
 	public static ExpenditureDTO of(Expenditure expenditure) {
 		return ExpenditureDTO.builder()
 			.expenditureId(expenditure.getId())

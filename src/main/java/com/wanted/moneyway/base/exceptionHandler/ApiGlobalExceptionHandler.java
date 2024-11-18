@@ -10,12 +10,14 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.wanted.moneyway.base.rsData.RsData;
 
-@RestControllerAdvice(annotations = {RestController.class}) // 모든 @RestController 에서 발생한 예외에 대한 제어권을 가로챈다.
+import lombok.extern.slf4j.Slf4j;
+
+@RestControllerAdvice
+@Slf4j
 public class ApiGlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -34,6 +36,7 @@ public class ApiGlobalExceptionHandler {
 			.stream()
 			.map(DefaultMessageSourceResolvable::getCode)
 			.collect(Collectors.joining("/"));
+		log.info("MethodArgumentNotValidException 발생 msg :: " + msg);
 
 		return RsData.of("F-MethodArgumentNotValidException", msg, data);
 	}
@@ -44,6 +47,7 @@ public class ApiGlobalExceptionHandler {
 		String msg = exception.getClass().toString();
 
 		String data = exception.getMessage();
+		log.info("RuntimeException 발생 msg :: " + msg);
 
 		return RsData.of("F-RuntimeException", msg, data);
 	}
@@ -52,7 +56,7 @@ public class ApiGlobalExceptionHandler {
 	@ResponseStatus(UNAUTHORIZED) // 예외에 따른 HTTP 상태 코드 설정
 	public RsData<String> handleAuthenticationException(AuthenticationException exception) {
 		String msg = exception.getMessage(); // 예외 메시지 추출
-
+		log.info("AuthenticationException 발생 msg :: " + msg);
 		// RsData.of 메서드 호출
 		return RsData.of("F-AuthenticationException", msg);
 	}

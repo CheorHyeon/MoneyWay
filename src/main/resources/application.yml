@@ -20,6 +20,11 @@ spring:
         show_sql: true
         format_sql: true # SQL문이 줄로 나뉘어 가독성 좋게 나옴, 끄면 한줄로 나옴 select * From ~~~ 이런식
         use_sql_comments: true  # JPQL에 대한 힌트
+server:
+  error:
+    include-message: always  # 메시지를 항상 포함
+    include-binding-errors: never  # 바인딩 오류는 포함하지 않음
+    include-stacktrace: never  # 스택 트레이스는 포함하지 않음
 
 logging:
   level:

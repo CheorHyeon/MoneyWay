@@ -7,7 +7,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,7 +44,7 @@ public class ApiV1ExpenditureController {
 	private final ExpenditureService expenditureService;
 
 	@PreAuthorize("isAuthenticated()")
-	@PostMapping("")
+	@PostMapping
 	@Operation(summary = "지출 내역 저장")
 	public RsData create(@RequestBody ExpenditureDTO expenditureDTO, @AuthenticationPrincipal User user) {
 		RsData<Expenditure> rsCreate = expenditureService.create(expenditureDTO, user.getUsername());
@@ -127,17 +126,18 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@PatchMapping ("/{id}")
+	@PatchMapping("/{id}")
 	@Operation(summary = "지출 내역 수정 API")
-	public RsData modify(@AuthenticationPrincipal User user, @RequestBody ExpenditureDTO expenditureDTO, @PathVariable Long id) {
-		if(expenditureDTO.checkAllNull())
+	public RsData modify(@AuthenticationPrincipal User user, @RequestBody ExpenditureDTO expenditureDTO,
+		@PathVariable Long id) {
+		if (expenditureDTO.checkAllNull())
 			return RsData.of("F-1", "수정할 값이 하나라도 입력되어야 합니다.");
 		RsData rsModify = expenditureService.modifyExpenditure(user.getUsername(), expenditureDTO, id);
 		return rsModify;
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping ("/today")
+	@GetMapping("/today")
 	@Operation(summary = "오늘 지출 내역 안내 API")
 	public RsData today(@AuthenticationPrincipal User user) {
 		RsData rsToday = expenditureService.getToday(user.getUsername());
@@ -145,7 +145,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping ("/statistics/lastmonth")
+	@GetMapping("/statistics/lastmonth")
 	@Operation(summary = "지출 통계 기능 1 - 지난달 대비 총액, 카테고리별 소비율 API")
 	public RsData statisticLastMonth(@AuthenticationPrincipal User user) {
 		RsData rsLastMonth = expenditureService.getLastMonthStatisics(user.getUsername());
@@ -153,7 +153,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping ("/statistics/lastweek")
+	@GetMapping("/statistics/lastweek")
 	@Operation(summary = "지출 통계 기능 2 - 7일전 지출 대비 지출 총액 비교 API")
 	public RsData statisticLastWeek(@AuthenticationPrincipal User user) {
 		RsData rsLastWeek = expenditureService.getLastWeekStatisics(user.getUsername());
@@ -161,7 +161,7 @@ public class ApiV1ExpenditureController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping ("/statistics/otheruser")
+	@GetMapping("/statistics/otheruser")
 	@Operation(summary = "지출 통계 기능 3 - 다른 유저들 평균 지출액과 나의 지출액 비율 API")
 	public RsData statisticOtherUser(@AuthenticationPrincipal User user) {
 		RsData rsOtherUser = expenditureService.getOtherUserStatisics(user.getUsername());
