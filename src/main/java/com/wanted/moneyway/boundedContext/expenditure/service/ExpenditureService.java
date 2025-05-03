@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.wanted.moneyway.base.rsData.RsData;
+import com.wanted.moneyway.base.service.HtmlSanitizerService;
 import com.wanted.moneyway.boundedContext.category.entity.Category;
 import com.wanted.moneyway.boundedContext.category.service.CategoryService;
 import com.wanted.moneyway.boundedContext.expenditure.dto.AMothAgoRatioResult;
@@ -26,6 +27,7 @@ import com.wanted.moneyway.boundedContext.expenditure.dto.CategorySumWithDanger;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RecommendDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.RemainingDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.ReviewWriteRequest;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
 import com.wanted.moneyway.boundedContext.expenditure.dto.TodayDTO;
@@ -49,10 +51,9 @@ public class ExpenditureService {
 
 	private final ExpenditureRepository expenditureRepository;
 	private final MemberService memberService;
-
 	private final CategoryService categoryService;
-
 	private final PlanService planService;
+	private final HtmlSanitizerService htmlSanitizerService;
 
 	@Transactional
 	public RsData<Expenditure> create(ExpenditureDTO expenditureDTO, String username) {
@@ -685,5 +686,14 @@ public class ExpenditureService {
 			.build();
 
 		return RsData.of("S-1", "다른 사람들 평균 지출 대비 나의 지출 비율 반환 성공", result);
+	}
+
+	@Transactional
+	public String writeReview(Member member, ReviewWriteRequest reviewWriteRequest) {
+		// 1. 혹시 모를 XSS 공격 대비 화이트리스트로 위험 요소 내용 삭제
+		String sanitizeContent = htmlSanitizerService.sanitize(reviewWriteRequest.content());
+
+		// 2. DB 저장인데 return으로 대체
+		return sanitizeContent;
 	}
 }

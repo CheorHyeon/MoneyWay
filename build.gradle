@@ -68,6 +68,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-cache' // 스프링 캐시 추상화
     implementation 'org.springframework.boot:spring-boot-starter-data-redis' // redis 사용
+
+    implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1") // Sanitizer
 }
 
 tasks.named('test') {

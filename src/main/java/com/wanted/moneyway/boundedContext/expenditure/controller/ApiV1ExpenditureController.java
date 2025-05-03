@@ -2,6 +2,7 @@ package com.wanted.moneyway.boundedContext.expenditure.controller;
 
 import java.time.LocalDate;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
@@ -17,16 +18,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.wanted.moneyway.base.rsData.RsData;
 import com.wanted.moneyway.boundedContext.expenditure.dto.ExpenditureDTO;
+import com.wanted.moneyway.boundedContext.expenditure.dto.ReviewWriteRequest;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchRequestDTO;
 import com.wanted.moneyway.boundedContext.expenditure.dto.SearchResult;
 import com.wanted.moneyway.boundedContext.expenditure.entity.Expenditure;
 import com.wanted.moneyway.boundedContext.expenditure.service.ExpenditureService;
+import com.wanted.moneyway.boundedContext.member.entity.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -166,5 +170,12 @@ public class ApiV1ExpenditureController {
 	public RsData statisticOtherUser(@AuthenticationPrincipal User user) {
 		RsData rsOtherUser = expenditureService.getOtherUserStatisics(user.getUsername());
 		return rsOtherUser;
+	}
+
+	@PostMapping("/review")
+	@Operation(summary = "한달 회고 작성", description = "한달동안 회고를 작성합니다.")
+	public ResponseEntity<String> reviewWrite(@AuthenticationPrincipal CustomUserDetails userDetails,
+		@RequestBody @Valid ReviewWriteRequest reviewWriteRequest) {
+		return ResponseEntity.ok(expenditureService.writeReview(userDetails.getMember(), reviewWriteRequest));
 	}
 }
