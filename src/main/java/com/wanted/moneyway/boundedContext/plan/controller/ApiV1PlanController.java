@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wanted.moneyway.base.rsData.RsData;
+import com.wanted.moneyway.boundedContext.member.entity.CustomUserDetails;
 import com.wanted.moneyway.boundedContext.plan.dto.PlanDTO;
 import com.wanted.moneyway.boundedContext.plan.entity.Plan;
 import com.wanted.moneyway.boundedContext.plan.service.PlanService;
@@ -37,11 +38,11 @@ public class ApiV1PlanController {
 	@PreAuthorize("isAuthenticated()")
 	@PostMapping("")
 	@Operation(summary = "예산 계획 생성 및 수정 API")
-	public RsData<List<Plan>> create(@RequestBody PlanDTO planDTO, @AuthenticationPrincipal User user) {
+	public RsData<List<Plan>> create(@RequestBody PlanDTO planDTO, @AuthenticationPrincipal CustomUserDetails user) {
 		if (planDTO.checkAllZero())
 			return RsData.of("F-1", "예산 항목 하나라도 입력 해야 등록 가능합니다.");
 
-		RsData<List<Plan>> rsData = planService.register(planDTO, user.getUsername());
+		RsData<List<Plan>> rsData = planService.register(planDTO, user.getMember());
 
 		return rsData;
 	}
