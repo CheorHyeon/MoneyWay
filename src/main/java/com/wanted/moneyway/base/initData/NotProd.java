@@ -116,9 +116,9 @@ public class NotProd {
 				education = 100_000, shopping = 100_000, transfer = 100_000, others = 100_000;
 			PlanDTO planDTO1 = new PlanDTO(food, cafe, education, dwelling, communication, shopping, transfer, others);
 
-			planService.register(planDTO1, user1.getUserName());
-			planService.register(planDTO1, user2.getUserName());
-			planService.register(planDTO1, user3.getUserName());
+			planService.register(planDTO1, user1);
+			planService.register(planDTO1, user2);
+			planService.register(planDTO1, user3);
 
 			List<Expenditure> expenditureList = new ArrayList<>();
 
@@ -194,7 +194,7 @@ public class NotProd {
 			others = 100_000;
 			PlanDTO planDTO2 = new PlanDTO(food, cafe, education, dwelling, communication, shopping, transfer, others);
 
-			planService.register(planDTO2, cheorHyeon.getUserName());
+			planService.register(planDTO2, cheorHyeon);
 
 			List<Expenditure> cheorHyeonExpenditureList = new ArrayList<>();
 
@@ -339,9 +339,6 @@ public class NotProd {
 			}
 
 			expenditureRepository.saveAll(user3ExpenditureList);
-
-
-
 		};
 	}
 }

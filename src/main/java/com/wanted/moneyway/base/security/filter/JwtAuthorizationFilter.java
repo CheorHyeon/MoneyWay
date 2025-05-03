@@ -9,12 +9,14 @@ import javax.security.sasl.AuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.wanted.moneyway.base.jwt.JwtProvider;
 import com.wanted.moneyway.base.redis.RedisService;
+import com.wanted.moneyway.base.security.service.CustomUserDetailsService;
+import com.wanted.moneyway.boundedContext.member.entity.CustomUserDetails;
 import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.member.service.MemberService;
 
@@ -31,6 +33,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 	private final MemberService memberService;
 
 	private final RedisService redisService;
+	private final CustomUserDetailsService customUserDetailsService;
 
 	@Override
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -57,7 +60,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 		}
 		// AT가 유효하다면 인증처리
 		if (bearerToken != null && isTokenValid(bearerToken.substring("Bearer ".length()))) {
-			forceAuthentication(getMemberFromToken(bearerToken.substring("Bearer ".length())));
+			forceAuthentication(getMemberNameFromToken(bearerToken.substring("Bearer ".length())));
 			filterChain.doFilter(request, response);
 			return;  // 다음 필터로 전달되어도 이 메서드는 종료되지 않고 계속 실행하므로 명시적 종료
 		}
@@ -100,17 +103,37 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 		return member;
 	}
 
+	private String getMemberNameFromToken(String token){
+		Map<String, Object> claims = jwtProvider.getClaims(token);
+		return (String) claims.get("userName");
+	}
+
 	private boolean isTokenValid(String token) {
 		return jwtProvider.verify(token);
 	}
 
 	private void forceAuthentication(Member member) {
-		User user = new User(member.getUserName(), "", member.getGrantedAuthorities());
+		CustomUserDetails customUserDetails = new CustomUserDetails(member);
 		UsernamePasswordAuthenticationToken authentication =
 			UsernamePasswordAuthenticationToken.authenticated(
-				user,
+				// custom User Detail를 Principal로 등록하여 인증 완료되었을때 실제 member 객체 꺼내쓰도록
+				customUserDetails,
 				null,
 				member.getGrantedAuthorities()
+			);
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(authentication);
+		SecurityContextHolder.setContext(context);
+	}
+
+	private void forceAuthentication(String memberUserName) {
+		UserDetails userDetails = customUserDetailsService.loadUserByUsername(memberUserName);
+		UsernamePasswordAuthenticationToken authentication =
+			UsernamePasswordAuthenticationToken.authenticated(
+				// custom User Detail를 Principal로 등록하여 인증 완료되었을때 실제 member 객체 꺼내쓰도록
+				userDetails,
+				null,
+				userDetails.getAuthorities()
 			);
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
 		context.setAuthentication(authentication);
