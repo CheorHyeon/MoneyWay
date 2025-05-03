@@ -28,7 +28,7 @@ public class PlanService {
 	private final PlanRepository planRepository;
 
 	@Transactional
-	public RsData<List<Plan>> register(PlanDTO planDTO, String username) {
+	public RsData<List<Plan>> register(PlanDTO planDTO, Member member) {
 		RsData<List<Category>> searchCategoryRs = categoryService.getAll();
 		// 카테고리가 없으면 실패 처리
 		if(searchCategoryRs.isFail())
@@ -36,7 +36,6 @@ public class PlanService {
 		List<Category> categoryList = searchCategoryRs.getData();
 
 		// 기존에 등록한 계획이 있는지 추출
-		Member member = memberService.get(username);
 		List<Plan> plans = planRepository.findAllByMember(member);
 		// 있다면 수정 상태 flag 변수
 		boolean isModify = plans.size() > 0;
