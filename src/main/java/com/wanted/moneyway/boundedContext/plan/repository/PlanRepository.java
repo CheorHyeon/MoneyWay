@@ -8,5 +8,5 @@ import com.wanted.moneyway.boundedContext.member.entity.Member;
 import com.wanted.moneyway.boundedContext.plan.entity.Plan;
 
 public interface PlanRepository extends JpaRepository<Plan, Long>, CustomPlanRespository {
-	List<Plan> findAllByMember(Member member);
+	List<Plan> findAllByMember_Id(Long memberId);
 }
