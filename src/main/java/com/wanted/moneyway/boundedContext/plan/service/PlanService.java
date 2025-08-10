@@ -17,9 +17,11 @@ import com.wanted.moneyway.boundedContext.plan.entity.Plan;
 import com.wanted.moneyway.boundedContext.plan.repository.PlanRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional(readOnly = true)
+@Slf4j
 @RequiredArgsConstructor
 public class PlanService {
 
@@ -36,7 +38,8 @@ public class PlanService {
 		List<Category> categoryList = searchCategoryRs.getData();
 
 		// 기존에 등록한 계획이 있는지 추출
-		List<Plan> plans = planRepository.findAllByMember(member);
+		// member 객체를 넘길 경우 준영속 상태를 영속화 시키려는 시도를 하기에 불필요 select 쿼리가 나감
+		List<Plan> plans = planRepository.findAllByMember_Id(member.getId());
 		// 있다면 수정 상태 flag 변수
 		boolean isModify = plans.size() > 0;
 
@@ -124,7 +127,7 @@ public class PlanService {
 		사용자 별 등록된 지출 계획 반환 메서드
 	 */
 	public RsData<List<Plan>> getAllByMember(Member member) {
-		List<Plan> allByMember = planRepository.findAllByMember(member);
+		List<Plan> allByMember = planRepository.findAllByMember_Id(member.getId());
 		if(allByMember.isEmpty())
 			return RsData.of("F-1", "설정한 지출 계획이 없습니다. 등록 후 이용해주세요");
 
